@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <UseWindowsForms>true</UseWindowsForms>
+    <Nullable>enable</Nullable>
+    <!-- WPF + WinForms implicit usings clash (Application, Button, ...), so usings are explicit -->
+    <ImplicitUsings>disable</ImplicitUsings>
+    <AssemblyName>Hum</AssemblyName>
+    <RootNamespace>Hum.App</RootNamespace>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>Assets\hum.ico</ApplicationIcon>
+    <Product>HUM</Product>
+    <AssemblyTitle>HUM</AssemblyTitle>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.2903.40" />
+  </ItemGroup>
+
+</Project>

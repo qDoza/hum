@@ -1,0 +1,31 @@
+﻿<UserControl x:Class="Hum.App.UI.LikesPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:m="clr-namespace:Hum.App.Motion"
+             Foreground="{StaticResource TextMain}" FontFamily="{StaticResource UiFont}">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition/>
+        </Grid.RowDefinitions>
+        <Grid>
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                <TextBlock Text="Любимое" FontSize="19" FontWeight="SemiBold"/>
+                <TextBlock x:Name="CountText" Style="{StaticResource Caption}" VerticalAlignment="Bottom" Margin="10,0,0,3"/>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <Button x:Name="ShuffleBtn" Style="{StaticResource IconButton}" Content="&#xE8B1;" ToolTip="Перемешать" m:Press.Enabled="True"/>
+                <Button x:Name="PlayAllBtn" Style="{StaticResource IconButton}" Content="&#xE768;" ToolTip="Слушать по порядку" Margin="6,0,0,0" m:Press.Enabled="True"/>
+            </StackPanel>
+        </Grid>
+        <TextBox x:Name="Query" Grid.Row="1" Style="{StaticResource Search}" Tag="Поиск в любимом" Margin="0,12,0,0"/>
+        <StackPanel x:Name="Filters" Grid.Row="2" Orientation="Horizontal" Margin="0,10,0,6">
+            <RadioButton x:Name="FAll" Style="{StaticResource ChipToggle}" GroupName="lf" Content="Все" IsChecked="True"/>
+            <RadioButton x:Name="FYa" Style="{StaticResource ChipToggle}" GroupName="lf" Content="Яндекс"/>
+            <RadioButton x:Name="FSc" Style="{StaticResource ChipToggle}" GroupName="lf" Content="SoundCloud"/>
+        </StackPanel>
+        <ListBox x:Name="List" Grid.Row="3" Style="{StaticResource TrackList}" Margin="-8,0"/>
+        <TextBlock x:Name="EmptyText" Grid.Row="3" Style="{StaticResource Caption}" TextWrapping="Wrap" TextAlignment="Center"
+                   HorizontalAlignment="Center" VerticalAlignment="Top" Margin="20,40,20,0"/>
+    </Grid>
+</UserControl>
+

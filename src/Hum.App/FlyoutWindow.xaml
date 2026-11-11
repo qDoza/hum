@@ -6,7 +6,7 @@
         Title="HUM" Width="384" Height="656"
         WindowStyle="None" AllowsTransparency="True" Background="Transparent"
         ResizeMode="NoResize" ShowInTaskbar="False" Topmost="True"
-        FontFamily="{StaticResource UiFont}" Foreground="{StaticResource TextMain}"
+        FontFamily="{DynamicResource UiFont}" Foreground="{DynamicResource TextMain}"
         UseLayoutRounding="True" TextOptions.TextFormattingMode="Ideal">
 
     <Grid x:Name="Root" Margin="12" RenderTransformOrigin="0.85,1">
@@ -21,7 +21,7 @@
             <Border.Effect><DropShadowEffect BlurRadius="22" ShadowDepth="5" Direction="270" Opacity="0.55"/></Border.Effect>
         </Border>
 
-        <Border x:Name="Card" CornerRadius="14" Background="{StaticResource Bg}" BorderBrush="#2C2C2C" BorderThickness="1">
+        <Border x:Name="Card" CornerRadius="14" Background="{DynamicResource Bg}" BorderBrush="#2C2C2C" BorderThickness="1">
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
@@ -36,8 +36,8 @@
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
                         <Viewbox Width="18" Height="18">
                             <Canvas Width="48" Height="48">
-                                <Path Data="{StaticResource HumRing}" Stroke="{StaticResource TextMain}" StrokeThickness="4"/>
-                                <Path Data="{StaticResource HumWave}" Stroke="{StaticResource TextMain}" StrokeThickness="4" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
+                                <Path Data="{StaticResource HumRing}" Stroke="{DynamicResource TextMain}" StrokeThickness="4"/>
+                                <Path Data="{StaticResource HumWave}" Stroke="{DynamicResource TextMain}" StrokeThickness="4" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
                             </Canvas>
                         </Viewbox>
                         <TextBlock Text="HUM" FontSize="16" FontWeight="Bold" Margin="8,0,0,0" VerticalAlignment="Center">

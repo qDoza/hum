@@ -105,7 +105,7 @@ public partial class NowPlaying : UserControl
         var liked = t is not null && H.Library.IsLiked(t);
         foreach (var b in new[] { CardLike, BarLike }) Icons.Set_(b, liked ? "heart-fill" : "heart", 18);
         // dislike only makes sense inside a wave
-        var wave = p.Context is PlayContext.MyWave or PlayContext.Mix;
+        var wave = p.IsWave;
         CardDislike.Opacity = BarDislike.Opacity = wave ? 1 : 0.35;
         CardDislike.IsEnabled = BarDislike.IsEnabled = wave;
     }

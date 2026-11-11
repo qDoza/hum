@@ -18,6 +18,12 @@
         <SolidColorBrush x:Key="Muted" Color="#8A8A8A"/>
         <SolidColorBrush x:Key="Dim" Color="#7A7A7A"/>
         <SolidColorBrush x:Key="Green" Color="#4ADE80"/>
+        <!-- «Оформление» swaps these at run time (Services/Look.cs) -->
+        <SolidColorBrush x:Key="Accent" Color="#F2F2F2"/>
+        <SolidColorBrush x:Key="OnAccent" Color="#000000"/>
+        <CornerRadius x:Key="R8">8</CornerRadius>
+        <CornerRadius x:Key="R9">9</CornerRadius>
+        <CornerRadius x:Key="R10">10</CornerRadius>
 
         <!-- HUM mark: a ring with a hum running through it (48×48 grid) -->
         <Geometry x:Key="HumRing">M24,6 A18,18 0 1 1 23.99,6 Z</Geometry>
@@ -32,11 +38,11 @@
             <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
-            <Setter Property="Foreground" Value="{StaticResource TextMain}"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextMain}"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="ButtonBase">
-                        <Border Background="{TemplateBinding Background}" CornerRadius="10">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="{DynamicResource R10}">
                             <ContentPresenter HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
                         </Border>
                     </ControlTemplate>
@@ -52,12 +58,12 @@
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <Border x:Name="bg" CornerRadius="9" Background="{StaticResource Chip}">
+                        <Border x:Name="bg" CornerRadius="{DynamicResource R9}" Background="{DynamicResource Chip}">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="bg" Property="Background" Value="{StaticResource ChipHover}"/>
+                                <Setter TargetName="bg" Property="Background" Value="{DynamicResource ChipHover}"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -90,13 +96,13 @@
         <Style x:Key="PlayButton" TargetType="Button" BasedOn="{StaticResource Bare}">
             <Setter Property="Width" Value="40"/>
             <Setter Property="Height" Value="40"/>
-            <Setter Property="Foreground" Value="#000000"/>
+            <Setter Property="Foreground" Value="{DynamicResource OnAccent}"/>
             <Setter Property="FontFamily" Value="{StaticResource Glyphs}"/>
             <Setter Property="FontSize" Value="15"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <Border x:Name="bg" CornerRadius="100" Background="{StaticResource TextMain}">
+                        <Border x:Name="bg" CornerRadius="100" Background="{DynamicResource Accent}">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
                         <ControlTemplate.Triggers>
@@ -113,22 +119,22 @@
         <Style x:Key="ChipToggle" TargetType="RadioButton">
             <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
-            <Setter Property="Foreground" Value="{StaticResource TextMain}"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextMain}"/>
             <Setter Property="FontSize" Value="13"/>
             <Setter Property="Margin" Value="0,0,6,6"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="RadioButton">
-                        <Border x:Name="bg" CornerRadius="9" Background="{StaticResource Chip}" Padding="12,7">
+                        <Border x:Name="bg" CornerRadius="{DynamicResource R9}" Background="{DynamicResource Chip}" Padding="12,7">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="bg" Property="Background" Value="{StaticResource ChipHover}"/>
+                                <Setter TargetName="bg" Property="Background" Value="{DynamicResource ChipHover}"/>
                             </Trigger>
                             <Trigger Property="IsChecked" Value="True">
-                                <Setter TargetName="bg" Property="Background" Value="{StaticResource TextMain}"/>
-                                <Setter Property="Foreground" Value="#000000"/>
+                                <Setter TargetName="bg" Property="Background" Value="{DynamicResource Accent}"/>
+                                <Setter Property="Foreground" Value="{DynamicResource OnAccent}"/>
                                 <Setter Property="FontWeight" Value="SemiBold"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
@@ -141,15 +147,15 @@
         <Style x:Key="ChipCheck" TargetType="ToggleButton">
             <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
-            <Setter Property="Foreground" Value="{StaticResource TextMain}"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextMain}"/>
             <Setter Property="FontSize" Value="13"/>
             <Setter Property="Margin" Value="0,0,6,6"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="ToggleButton">
-                        <Border x:Name="bg" CornerRadius="9" Background="Transparent" BorderBrush="#333333" BorderThickness="1" Padding="10,6,12,6">
+                        <Border x:Name="bg" CornerRadius="{DynamicResource R9}" Background="Transparent" BorderBrush="#333333" BorderThickness="1" Padding="10,6,12,6">
                             <StackPanel Orientation="Horizontal">
-                                <TextBlock x:Name="mark" Text="&#xE710;" FontFamily="{StaticResource Glyphs}" FontSize="10" VerticalAlignment="Center" Margin="0,0,7,0" Foreground="{StaticResource Muted}"/>
+                                <TextBlock x:Name="mark" Text="&#xE710;" FontFamily="{StaticResource Glyphs}" FontSize="10" VerticalAlignment="Center" Margin="0,0,7,0" Foreground="{DynamicResource Muted}"/>
                                 <ContentPresenter VerticalAlignment="Center"/>
                             </StackPanel>
                         </Border>
@@ -158,10 +164,10 @@
                                 <Setter TargetName="bg" Property="BorderBrush" Value="#4A4A4A"/>
                             </Trigger>
                             <Trigger Property="IsChecked" Value="True">
-                                <Setter TargetName="bg" Property="Background" Value="{StaticResource ModeBox}"/>
-                                <Setter TargetName="bg" Property="BorderBrush" Value="{StaticResource ModeBox}"/>
+                                <Setter TargetName="bg" Property="Background" Value="{DynamicResource ModeBox}"/>
+                                <Setter TargetName="bg" Property="BorderBrush" Value="{DynamicResource ModeBox}"/>
                                 <Setter TargetName="mark" Property="Text" Value="&#xE73E;"/>
-                                <Setter TargetName="mark" Property="Foreground" Value="{StaticResource TextMain}"/>
+                                <Setter TargetName="mark" Property="Foreground" Value="{DynamicResource TextMain}"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -173,18 +179,18 @@
         <Style x:Key="Seg" TargetType="RadioButton">
             <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
-            <Setter Property="Foreground" Value="{StaticResource Muted}"/>
+            <Setter Property="Foreground" Value="{DynamicResource Muted}"/>
             <Setter Property="FontSize" Value="12"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="RadioButton">
-                        <Border x:Name="bg" CornerRadius="8" Background="Transparent" Padding="0,7">
+                        <Border x:Name="bg" CornerRadius="{DynamicResource R8}" Background="Transparent" Padding="0,7">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsChecked" Value="True">
-                                <Setter TargetName="bg" Property="Background" Value="{StaticResource ModeBox}"/>
-                                <Setter Property="Foreground" Value="{StaticResource TextMain}"/>
+                                <Setter TargetName="bg" Property="Background" Value="{DynamicResource ModeBox}"/>
+                                <Setter Property="Foreground" Value="{DynamicResource TextMain}"/>
                                 <Setter Property="FontWeight" Value="SemiBold"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
@@ -195,19 +201,19 @@
 
         <!-- search box with a magnifier and a placeholder taken from Tag -->
         <Style x:Key="Search" TargetType="TextBox">
-            <Setter Property="Foreground" Value="{StaticResource TextMain}"/>
-            <Setter Property="CaretBrush" Value="{StaticResource TextMain}"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextMain}"/>
+            <Setter Property="CaretBrush" Value="{DynamicResource TextMain}"/>
             <Setter Property="SelectionBrush" Value="#666666"/>
             <Setter Property="FontSize" Value="13"/>
             <Setter Property="Height" Value="36"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="TextBox">
-                        <Border x:Name="bd" Background="{StaticResource Panel}" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="10">
+                        <Border x:Name="bd" Background="{DynamicResource Panel}" BorderBrush="{DynamicResource Line}" BorderThickness="1" CornerRadius="{DynamicResource R10}">
                             <Grid Margin="12,0">
                                 <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition/></Grid.ColumnDefinitions>
-                                <TextBlock Text="&#xE721;" FontFamily="{StaticResource Glyphs}" FontSize="13" Foreground="{StaticResource Muted}" VerticalAlignment="Center" Margin="0,0,10,0"/>
-                                <TextBlock x:Name="ph" Grid.Column="1" Text="{TemplateBinding Tag}" Foreground="{StaticResource Dim}" VerticalAlignment="Center" Visibility="Collapsed"/>
+                                <TextBlock Text="&#xE721;" FontFamily="{StaticResource Glyphs}" FontSize="13" Foreground="{DynamicResource Muted}" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                                <TextBlock x:Name="ph" Grid.Column="1" Text="{TemplateBinding Tag}" Foreground="{DynamicResource Dim}" VerticalAlignment="Center" Visibility="Collapsed"/>
                                 <ScrollViewer x:Name="PART_ContentHost" Grid.Column="1" VerticalAlignment="Center"/>
                             </Grid>
                         </Border>
@@ -226,17 +232,17 @@
 
         <!-- plain input field (no magnifier), placeholder from Tag -->
         <Style x:Key="Field" TargetType="TextBox">
-            <Setter Property="Foreground" Value="{StaticResource TextMain}"/>
-            <Setter Property="CaretBrush" Value="{StaticResource TextMain}"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextMain}"/>
+            <Setter Property="CaretBrush" Value="{DynamicResource TextMain}"/>
             <Setter Property="SelectionBrush" Value="#666666"/>
             <Setter Property="FontSize" Value="12"/>
             <Setter Property="Height" Value="32"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="TextBox">
-                        <Border x:Name="bd" Background="#0D0D0D" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="9">
+                        <Border x:Name="bd" Background="#0D0D0D" BorderBrush="{DynamicResource Line}" BorderThickness="1" CornerRadius="{DynamicResource R9}">
                             <Grid Margin="10,0">
-                                <TextBlock x:Name="ph" Text="{TemplateBinding Tag}" Foreground="{StaticResource Dim}" VerticalAlignment="Center" Visibility="Collapsed"/>
+                                <TextBlock x:Name="ph" Text="{TemplateBinding Tag}" Foreground="{DynamicResource Dim}" VerticalAlignment="Center" Visibility="Collapsed"/>
                                 <ScrollViewer x:Name="PART_ContentHost" VerticalAlignment="Center"/>
                             </Grid>
                         </Border>
@@ -268,16 +274,16 @@
         <Style x:Key="SectionTitle" TargetType="TextBlock">
             <Setter Property="FontSize" Value="14"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="Foreground" Value="{StaticResource TextMain}"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextMain}"/>
         </Style>
         <Style x:Key="Caption" TargetType="TextBlock">
             <Setter Property="FontSize" Value="12"/>
-            <Setter Property="Foreground" Value="{StaticResource Muted}"/>
+            <Setter Property="Foreground" Value="{DynamicResource Muted}"/>
         </Style>
 
         <!-- one track row: cover, title, [ЯМ|SC] artist, duration, heart -->
         <DataTemplate x:Key="TrackRow">
-            <Border x:Name="row" CornerRadius="10" Padding="8,7" Background="Transparent">
+            <Border x:Name="row" CornerRadius="{DynamicResource R10}" Padding="8,7" Background="Transparent">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto"/>
@@ -285,7 +291,7 @@
                         <ColumnDefinition Width="Auto"/>
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
-                    <Rectangle Width="38" Height="38" RadiusX="8" RadiusY="8" Fill="{StaticResource Chip}"/>
+                    <Rectangle Width="38" Height="38" RadiusX="8" RadiusY="8" Fill="{DynamicResource Chip}"/>
                     <Rectangle Width="38" Height="38" RadiusX="8" RadiusY="8">
                         <Rectangle.Fill>
                             <ImageBrush ImageSource="{Binding CoverUrl, Converter={StaticResource Cover}}" Stretch="UniformToFill"/>
@@ -295,23 +301,23 @@
                         <TextBlock x:Name="title" Text="{Binding Title}" FontSize="13" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
                         <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
                             <Border BorderBrush="#333333" BorderThickness="1" CornerRadius="4" Padding="4,0" Margin="0,0,6,0" VerticalAlignment="Center">
-                                <TextBlock Text="{Binding SourceTag}" FontSize="9.5" FontWeight="SemiBold" Foreground="{StaticResource Muted}"/>
+                                <TextBlock Text="{Binding SourceTag}" FontSize="9.5" FontWeight="SemiBold" Foreground="{DynamicResource Muted}"/>
                             </Border>
-                            <TextBlock Text="{Binding Artist}" FontSize="12" Foreground="{StaticResource Muted}" TextTrimming="CharacterEllipsis" MaxWidth="400"/>
+                            <TextBlock Text="{Binding Artist}" FontSize="12" Foreground="{DynamicResource Muted}" TextTrimming="CharacterEllipsis" MaxWidth="400"/>
                         </StackPanel>
                     </StackPanel>
-                    <TextBlock Grid.Column="2" Text="{Binding Duration}" FontSize="12" Foreground="{StaticResource Muted}" VerticalAlignment="Center"/>
+                    <TextBlock Grid.Column="2" Text="{Binding Duration}" FontSize="12" Foreground="{DynamicResource Muted}" VerticalAlignment="Center"/>
                     <Button x:Name="heart" Grid.Column="3" Style="{StaticResource Ctl}" Width="30" Height="30" Margin="6,0,0,0" FontSize="13"
-                            Content="&#xEB51;" Foreground="{StaticResource Dim}" Tag="{Binding}" Click="OnRowHeart" ToolTip="Нравится"/>
+                            Content="&#xEB51;" Foreground="{DynamicResource Dim}" Tag="{Binding}" Click="OnRowHeart" ToolTip="Нравится"/>
                 </Grid>
             </Border>
             <DataTemplate.Triggers>
                 <DataTrigger Binding="{Binding IsLiked}" Value="True">
                     <Setter TargetName="heart" Property="Content" Value="&#xEB52;"/>
-                    <Setter TargetName="heart" Property="Foreground" Value="{StaticResource TextMain}"/>
+                    <Setter TargetName="heart" Property="Foreground" Value="{DynamicResource Accent}"/>
                 </DataTrigger>
                 <DataTrigger Binding="{Binding IsCurrent}" Value="True">
-                    <Setter TargetName="row" Property="Background" Value="{StaticResource Panel}"/>
+                    <Setter TargetName="row" Property="Background" Value="{DynamicResource Panel}"/>
                 </DataTrigger>
                 <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=ListBoxItem}, Path=IsMouseOver}" Value="True">
                     <Setter TargetName="row" Property="Background" Value="#0E0E0E"/>
@@ -322,7 +328,7 @@
         <Style x:Key="TrackList" TargetType="ListBox">
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Foreground" Value="{StaticResource TextMain}"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextMain}"/>
             <Setter Property="ItemTemplate" Value="{StaticResource TrackRow}"/>
             <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Disabled"/>
             <Setter Property="VirtualizingPanel.ScrollUnit" Value="Pixel"/>

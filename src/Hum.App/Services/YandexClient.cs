@@ -230,6 +230,42 @@ public sealed class YandexClient
         return list;
     }
 
+    // ------------------------------------------------------------------ artists
+
+    public sealed record ArtistInfo(string Name, string? PhotoUrl, string Sub, List<Track> Popular, List<Track> All);
+
+    /// <summary>An artist's page: photo, genres and listeners, popular tracks, then the rest of their tracks.</summary>
+    public async Task<ArtistInfo> ArtistAsync(string id)
+    {
+        var r = await GetAsync($"artists/{id}/brief-info") ?? throw new InvalidOperationException("пустой ответ");
+        var a = r["artist"];
+        var img = a?["cover"]?["uri"]?.ToString() ?? a?["ogImage"]?.ToString();
+        var bits = new List<string>();
+        var genres = (a?["genres"]?.AsArray() ?? new JsonArray()).Select(g => g?.ToString()).Where(g => !string.IsNullOrEmpty(g)).Take(2)
+                     .Select(g => Genres.TryGetValue(g!, out var x) ? x : g!).ToList();
+        if (genres.Count > 0) bits.Add(string.Join(", ", genres));
+        if (r["stats"]?["lastMonthListeners"]?.GetValue<long>() is long l and > 0)
+            bits.Add((l >= 1_000_000 ? (l / 1e6).ToString("0.#", CultureInfo.GetCultureInfo("ru-RU")) + " млн" : l >= 1000 ? $"{l / 1000} тыс" : l.ToString()) + " слушателей за месяц");
+        var popular = (r["popularTracks"]?.AsArray() ?? new JsonArray()).Select(Parse).OfType<Track>().ToList();
+        var all = new List<Track>();
+        try
+        {
+            var t = await GetAsync($"artists/{id}/tracks?page=0&page-size=100");
+            var seen = popular.Select(x => x.Key).ToHashSet();
+            all = (t?["tracks"]?.AsArray() ?? new JsonArray()).Select(Parse).OfType<Track>().Where(x => seen.Add(x.Key)).ToList();
+        }
+        catch (Exception e) { Log.Write("artist tracks: " + e.Message); }
+        return new ArtistInfo(a?["name"]?.ToString() ?? "", string.IsNullOrEmpty(img) ? null : "https://" + img.Replace("%%", "1000x1000"), string.Join(" · ", bits), popular, all);
+    }
+
+    private static readonly Dictionary<string, string> Genres = new()
+    {
+        ["rusrap"] = "русский рэп", ["foreignrap"] = "рэп", ["rap"] = "рэп", ["rusrock"] = "русский рок", ["rock"] = "рок", ["ruspop"] = "русская поп",
+        ["pop"] = "поп", ["electronics"] = "электроника", ["dance"] = "танцевальная", ["alternative"] = "альтернатива", ["indie"] = "инди",
+        ["soundtrack"] = "саундтрек", ["relax"] = "релакс", ["estrada"] = "эстрада", ["metal"] = "метал", ["jazz"] = "джаз", ["rnb"] = "r&b",
+        ["soul"] = "соул", ["folk"] = "фолк", ["classical"] = "классика", ["dnb"] = "drum & bass", ["lounge"] = "лаунж", ["local_indie"] = "инди",
+    };
+
     // ------------------------------------------------------------------ parsing
 
     private static Track? Parse(JsonNode? n)
@@ -242,7 +278,11 @@ public sealed class YandexClient
         var title = n["title"]?.ToString() ?? "Без названия";
         var version = n["version"]?.ToString();
         if (!string.IsNullOrWhiteSpace(version)) title += $" ({version})";
-        var artists = string.Join(", ", (n["artists"]?.AsArray() ?? new JsonArray()).Select(a => a?["name"]?.ToString()).Where(s => !string.IsNullOrEmpty(s)));
+        var artistNodes = n["artists"]?.AsArray() ?? new JsonArray();
+        var artists = string.Join(", ", artistNodes.Select(a => a?["name"]?.ToString()).Where(s => !string.IsNullOrEmpty(s)));
+        var refs = artistNodes.Where(a => a?["id"] is not null && !string.IsNullOrEmpty(a?["name"]?.ToString()) && a?["various"]?.GetValue<bool>() != true)
+                              .Select(a => new ArtistRef(a!["id"]!.ToString(), a["name"]!.ToString())).ToList();
+        var genre = album?["genre"]?.ToString();
         var cover = n["coverUri"]?.ToString() ?? album?["coverUri"]?.ToString();
         var lyr = n["lyricsInfo"];
         var synced = lyr?["hasAvailableSyncLyrics"]?.GetValue<bool>() == true;
@@ -253,6 +293,9 @@ public sealed class YandexClient
             Title = title,
             Artist = string.IsNullOrEmpty(artists) ? "—" : artists,
             Album = album?["title"]?.ToString(),
+            Artists = refs,
+            Genre = string.IsNullOrEmpty(genre) ? null : Genres.TryGetValue(genre, out var gn) ? gn : genre,
+            Year = album?["year"]?.GetValue<int>(),
             DurationMs = n["durationMs"]?.GetValue<int>() ?? 0,
             CoverUrl = string.IsNullOrEmpty(cover) ? null : "https://" + cover.Replace("%%", "200x200"),
             HasSyncedLyrics = synced,

@@ -48,6 +48,7 @@ public sealed class ProgressLine : FrameworkElement
 
     public ProgressLine()
     {
+        Services.Look.Changed += InvalidateVisual;
         Height = 14;
         Cursor = Cursors.Hand;
         MouseEnter += (_, _) => Thicken(1);
@@ -109,9 +110,10 @@ public sealed class ProgressLine : FrameworkElement
         var v = _drag >= 0 ? _drag : _value;
         dc.DrawRectangle(Brushes.Transparent, null, new Rect(0, 0, w, ActualHeight));
         dc.DrawRoundedRectangle(Track, null, new Rect(0, y, w, h), h / 2, h / 2);
-        if (v > 0) dc.DrawRoundedRectangle(Fill, null, new Rect(0, y, Math.Max(h, w * v), h), h / 2, h / 2);
+        var fill = TryFindResource("Accent") as Brush ?? Fill;
+        if (v > 0) dc.DrawRoundedRectangle(fill, null, new Rect(0, y, Math.Max(h, w * v), h), h / 2, h / 2);
         if (_thick.Value > 0.05 || _drag >= 0)
-            dc.DrawEllipse(Fill, null, new Point(w * v, ActualHeight / 2), 5 * Math.Max(_thick.Value, _drag >= 0 ? 1 : 0), 5 * Math.Max(_thick.Value, _drag >= 0 ? 1 : 0));
+            dc.DrawEllipse(fill, null, new Point(w * v, ActualHeight / 2), 5 * Math.Max(_thick.Value, _drag >= 0 ? 1 : 0), 5 * Math.Max(_thick.Value, _drag >= 0 ? 1 : 0));
     }
 }
 

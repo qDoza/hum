@@ -1,12 +1,12 @@
 <UserControl x:Class="Hum.App.UI.SearchPage"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             Foreground="{StaticResource TextMain}" FontFamily="{StaticResource UiFont}">
+             Foreground="{DynamicResource TextMain}" FontFamily="{DynamicResource UiFont}">
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition/>
         </Grid.RowDefinitions>
-        <Border Background="{StaticResource Panel}" CornerRadius="10" Padding="3">
+        <Border Background="{DynamicResource Panel}" CornerRadius="10" Padding="3">
             <UniformGrid Columns="2">
                 <RadioButton x:Name="SrcYa" Style="{StaticResource Seg}" GroupName="ssrc" Content="Яндекс"/>
                 <RadioButton x:Name="SrcSc" Style="{StaticResource Seg}" GroupName="ssrc" Content="SoundCloud"/>

@@ -1,4 +1,7 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Windows.Controls.Primitives;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -36,9 +39,13 @@ public partial class MainWindow : Window
         CloseBtn.Click += (_, _) => Hide();
         AccountsBtn.Click += (_, _) => { BuildAccounts(); AccountsPopup.IsOpen = true; };
         CoverPage.CloseRequested += () => CoverPage.Close();
+        CoverPage.ArtistRequested += (id, name) => ArtistPage.Open(id, name);
+        LookBtn.Content = Icons.Make("palette", 17);
+        LookBtn.Click += (_, _) => { BuildLook(); LookPopup.IsOpen = true; };
         KeyDown += (_, e) =>
         {
-            if (e.Key == Key.Escape && CoverPage.IsVisible) { CoverPage.Close(); e.Handled = true; }
+            if (e.Key == Key.Escape && ArtistPage.IsVisible) { ArtistPage.Close(); e.Handled = true; }
+            else if (e.Key == Key.Escape && CoverPage.IsVisible) { CoverPage.Close(); e.Handled = true; }
             else if (e.Key == Key.F && Keyboard.Modifiers == ModifierKeys.Control) { ShowTab(2); Search.FocusQuery(); }
             else if (e.Key == Key.Space && e.OriginalSource is not TextBox) { App.Hub.Player.Toggle(); e.Handled = true; }
         };
@@ -68,6 +75,7 @@ public partial class MainWindow : Window
     private void ShowTab(int tab, bool animate = true)
     {
         if (CoverPage.IsVisible) CoverPage.Close();
+        if (ArtistPage.IsVisible) ArtistPage.Close();
         _tab = tab;
         Tabs.Paint(_tabs, _tabs[tab]);
         Tabs.Place(TabHost, TabBlob, _tabs[tab], animate);
@@ -109,9 +117,9 @@ public partial class MainWindow : Window
                 Style = (Style)FindResource("Bare"),
                 Content = new Border
                 {
-                    Background = connected ? (Brush)FindResource("Chip") : (Brush)FindResource("TextMain"),
+                    Background = connected ? (Brush)FindResource("Chip") : (Brush)FindResource("Accent"),
                     CornerRadius = new CornerRadius(9), Padding = new Thickness(12, 6, 12, 6),
-                    Child = new TextBlock { Text = connected ? "Выйти" : "Войти", FontSize = 12, FontWeight = FontWeights.SemiBold, Foreground = connected ? (Brush)FindResource("TextMain") : Brushes.Black },
+                    Child = new TextBlock { Text = connected ? "Выйти" : "Войти", FontSize = 12, FontWeight = FontWeights.SemiBold, Foreground = connected ? (Brush)FindResource("TextMain") : (Brush)FindResource("OnAccent") },
                 },
                 VerticalAlignment = VerticalAlignment.Center,
             };
@@ -138,8 +146,8 @@ public partial class MainWindow : Window
             IsEnabled = lib2.Has(Source.Yandex) || lib2.Has(Source.SoundCloud),
             Content = new Border
             {
-                Background = (Brush)FindResource("TextMain"), CornerRadius = new CornerRadius(9), Padding = new Thickness(12, 8, 12, 8),
-                Child = new TextBlock { Text = "Подключить iPhone", FontSize = 12.5, FontWeight = FontWeights.SemiBold, Foreground = Brushes.Black, HorizontalAlignment = HorizontalAlignment.Center },
+                Background = (Brush)FindResource("Accent"), CornerRadius = new CornerRadius(9), Padding = new Thickness(12, 8, 12, 8),
+                Child = new TextBlock { Text = "Подключить iPhone", FontSize = 12.5, FontWeight = FontWeights.SemiBold, Foreground = (Brush)FindResource("OnAccent"), HorizontalAlignment = HorizontalAlignment.Center },
             },
         };
         pair.Click += (_, _) =>
@@ -204,6 +212,109 @@ public partial class MainWindow : Window
         id.KeyDown += (_, e) => { if (e.Key == Key.Enter) Keyboard.ClearFocus(); };
         Paint();
         return box;
+    }
+
+    public void OpenArtist(string id, string name) => ArtistPage.Open(id, name);
+    public void OpenLook() { BuildLook(); LookPopup.IsOpen = true; }
+
+    // ------------------------------------------------------------------ «Оформление»
+
+    private void BuildLook()
+    {
+        var L = App.Hub.Settings.Look;
+        LookList.Children.Clear();
+        LookList.Children.Add(new TextBlock { Text = "Оформление", FontSize = 14, FontWeight = FontWeights.SemiBold, Margin = new Thickness(0, 0, 0, 4) });
+        void Changed() { Services.Look.Save(); BuildLook(); Tabs.Paint(_tabs, _tabs[_tab]); }
+        TextBlock Cap(string t) => new() { Text = t.ToUpperInvariant(), FontSize = 10.5, FontWeight = FontWeights.SemiBold, Foreground = (Brush)FindResource("Muted"), Margin = new Thickness(0, 14, 0, 8) };
+
+        // accent swatches
+        LookList.Children.Add(Cap("Акцент"));
+        var sw = new WrapPanel();
+        foreach (var a in Services.Look.Accents)
+        {
+            Brush fill = a.Hex is { } h ? new SolidColorBrush(Services.Look.Hex(h)) : new LinearGradientBrush(new GradientStopCollection
+            {
+                new(Color.FromRgb(0xFF, 0x6A, 0x55), 0), new(Color.FromRgb(0xFF, 0xB4, 0x3D), 0.25), new(Color.FromRgb(0x45, 0xE0, 0xB0), 0.5),
+                new(Color.FromRgb(0x58, 0xB2, 0xFF), 0.75), new(Color.FromRgb(0xB3, 0x8C, 0xFF), 1),
+            }, 45);
+            var on = L.Accent == a.Id;
+            var dot = new Grid { Width = 34, Height = 34 };
+            dot.Children.Add(new System.Windows.Shapes.Ellipse { Fill = fill, Width = 26, Height = 26 });
+            if (on) dot.Children.Add(new System.Windows.Shapes.Ellipse { Stroke = (Brush)FindResource("TextMain"), StrokeThickness = 2 });
+            var b = new Button { Style = (Style)FindResource("Bare"), Content = dot, ToolTip = a.Title, Margin = new Thickness(0, 0, 6, 6) };
+            Press.SetEnabled(b, true);
+            b.Click += (_, _) => { L.Accent = a.Id; Changed(); };
+            sw.Children.Add(b);
+        }
+        LookList.Children.Add(sw);
+
+        // a row of option tiles
+        void Opts(string title, IEnumerable<(string Id, string Title, Brush? Preview, string? Glyph)> items, Func<string> get, Action<string> set)
+        {
+            LookList.Children.Add(Cap(title));
+            var wrap = new UniformGrid { Columns = 3 };
+            foreach (var (id, name, pv, glyph) in items)
+            {
+                var on = get() == id;
+                var tile = new StackPanel();
+                var preview = new Border { Height = 30, CornerRadius = new CornerRadius(7), Background = pv ?? (Brush)FindResource("ModeBox"), Margin = new Thickness(0, 0, 0, 6) };
+                if (glyph is not null) preview.Child = new TextBlock { Text = glyph, FontSize = 15, HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center, Foreground = (Brush)FindResource("TextMain") };
+                tile.Children.Add(preview);
+                tile.Children.Add(new TextBlock { Text = name, FontSize = 11.5, Foreground = (Brush)FindResource(on ? "TextMain" : "Muted") });
+                var box = new Border
+                {
+                    Child = tile, Padding = new Thickness(8), CornerRadius = new CornerRadius(10), Background = (Brush)FindResource("Chip"),
+                    BorderBrush = on ? (Brush)FindResource("Accent") : Brushes.Transparent, BorderThickness = new Thickness(2), Margin = new Thickness(0, 0, 6, 6),
+                };
+                var b = new Button { Style = (Style)FindResource("Bare"), Content = box };
+                Press.SetEnabled(b, true);
+                b.Click += (_, _) => { set(id); Changed(); };
+                wrap.Children.Add(b);
+            }
+            LookList.Children.Add(wrap);
+        }
+        SolidColorBrush B(string hex) => new(Services.Look.Hex(hex));
+
+        Opts("Фон", Services.Look.Backgrounds.Select(b => (b.Id, b.Title, b.Colors.Length > 0 ? (Brush?)B(b.Colors[1]) : new LinearGradientBrush(Color.FromRgb(0x3A, 0x1D, 0x14), Color.FromRgb(0x0D, 0x13, 0x22), 0), (string?)null)),
+            () => L.Bg, v => L.Bg = v);
+        Opts("Контраст", new (string, string, Brush?, string?)[] { ("normal", "Обычный", null, "Аа"), ("high", "Высокий", null, "Аа") }, () => L.Contrast, v => L.Contrast = v);
+        Opts("Шрифт", Services.Look.Fonts.Select(f => (f.Id, f.Title, (Brush?)null, (string?)"Аа")), () => L.Font, v => L.Font = v);
+        Opts("Форма кнопок", new (string, string, Brush?, string?)[] { ("soft", "Мягкая", null, null), ("pill", "Капсулы", null, null), ("sharp", "Острая", null, null) }, () => L.Shape, v => L.Shape = v);
+        Opts("Обложка в плеере", new (string, string, Brush?, string?)[] { ("round", "Пластинка", null, "●"), ("square", "Квадрат", null, "■") }, () => L.Cover, v => L.Cover = v);
+        Opts("Фон плеера", new (string, string, Brush?, string?)[] { ("glass", "Стекло", new LinearGradientBrush(Color.FromRgb(0x3A, 0x2A, 0x24), Color.FromRgb(0x14, 0x14, 0x14), 45), null),
+            ("vivid", "Ярко", new LinearGradientBrush(Color.FromRgb(0xB4, 0x55, 0x3A), Color.FromRgb(0x3A, 0x1D, 0x60), 45), null), ("black", "Чёрный", B("#050505"), null) }, () => L.PlayerBg, v => L.PlayerBg = v);
+        Opts("Визуализатор", new (string, string, Brush?, string?)[] { ("bars", "Полосы", null, "▮▮▮"), ("waves", "Волны", null, "◎"), ("minimal", "Минимум", null, "○"), ("off", "Выкл", null, "—") }, () => L.VizStyle, v => L.VizStyle = v);
+        Opts("Сила визуализатора", new (string, string, Brush?, string?)[] { ("0.6", "Спокойно", null, "∿"), ("1", "Обычно", null, "〰"), ("1.5", "Мощно", null, "≋") },
+            () => L.VizAmount.ToString(System.Globalization.CultureInfo.InvariantCulture), v => L.VizAmount = double.Parse(v, System.Globalization.CultureInfo.InvariantCulture));
+
+        // switches
+        void Switch(string title, string sub, bool value, Action<bool> set)
+        {
+            var row = new Grid { Margin = new Thickness(0, 12, 0, 0) };
+            row.ColumnDefinitions.Add(new ColumnDefinition());
+            row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            var info = new StackPanel();
+            info.Children.Add(new TextBlock { Text = title, FontSize = 13 });
+            info.Children.Add(new TextBlock { Text = sub, FontSize = 11.5, Foreground = (Brush)FindResource("Muted"), TextWrapping = TextWrapping.Wrap });
+            row.Children.Add(info);
+            var on = new Border
+            {
+                CornerRadius = new CornerRadius(9), Padding = new Thickness(12, 6, 12, 6), Background = value ? (Brush)FindResource("Accent") : (Brush)FindResource("Chip"),
+                Child = new TextBlock { Text = value ? "Вкл" : "Выкл", FontSize = 12, FontWeight = FontWeights.SemiBold, Foreground = value ? (Brush)FindResource("OnAccent") : (Brush)FindResource("TextMain") },
+            };
+            var b = new Button { Style = (Style)FindResource("Bare"), Content = on, VerticalAlignment = VerticalAlignment.Center };
+            Grid.SetColumn(b, 1);
+            b.Click += (_, _) => { set(!value); Changed(); };
+            row.Children.Add(b);
+            LookList.Children.Add(row);
+        }
+        Switch("Вращать обложку", "Крутится как пластинка, пока играет", L.Spin, v => L.Spin = v);
+        Switch("Меньше движения", "Без дрожи, частиц и плавающего света", L.ReducedMotion, v => L.ReducedMotion = v);
+
+        var reset = new Button { Style = (Style)FindResource("Bare"), Margin = new Thickness(0, 16, 0, 0), HorizontalAlignment = HorizontalAlignment.Left };
+        reset.Content = new TextBlock { Text = "Вернуть как было", FontSize = 12, TextDecorations = TextDecorations.Underline, Foreground = (Brush)FindResource("TextMain") };
+        reset.Click += (_, _) => { App.Hub.Settings.Look = new Services.LookSettings(); Changed(); };
+        LookList.Children.Add(reset);
     }
 
     private void ShowToast(string text)

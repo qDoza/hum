@@ -12,7 +12,7 @@ using Windows.Storage.Streams;
 namespace Hum.App.Services;
 
 /// <summary>What is playing right now.</summary>
-public enum PlayContext { None, MyWave, Mix, Likes, Search }
+public enum PlayContext { None, MyWave, Mix, Likes, Search, Vibe, Artist }
 
 /// <summary>
 /// Playback through the system media player (Media Foundation): plays Yandex mp3 and SoundCloud
@@ -121,6 +121,76 @@ public sealed class PlayerService
     };
 
     /// <summary>A «занятие» from the service (workout, focus…): its own station seed, not a setting.</summary>
+    /// <summary>«Эфир по артисту»: a wave seeded by one Yandex artist.</summary>
+    public Task PlayArtistWaveAsync(string artistId, string name) =>
+        StartYandexWave(new[] { "artist:" + artistId }, PlayContext.Mix, "artist:" + artistId, "Эфир · " + name);
+
+    /// <summary>Key of the track «Эфир по вайбу» was started from (null when no vibe wave plays).</summary>
+    public string? VibeKey { get; private set; }
+    private Track? _vibeSeed;
+
+    /// <summary>
+    /// «Эфир по вайбу»: the current track keeps playing and becomes the seed of a new wave of similar music
+    /// (Yandex: a station seeded by the track; SoundCloud: «похожие» on it and on what follows).
+    /// </summary>
+    public async Task StartVibeAsync()
+    {
+        if (Current is not { } t) return;
+        if (Context == PlayContext.Vibe && VibeKey == t.Key) { Toast?.Invoke("Уже играет эфир по этому треку"); return; }
+        SetBusy(true);
+        try
+        {
+            List<Track> list;
+            if (t.Source == Source.Yandex)
+            {
+                if (_lib.Ya is not { } ya) throw new InvalidOperationException("подключите Яндекс");
+                var seeds = new[] { "track:" + t.Id.Split(':')[0] };
+                var b = await ya.WaveStartAsync(seeds);
+                _waveSource = Source.Yandex; _seeds = seeds; _session = b.SessionId; _batch = b.BatchId;
+                list = b.Tracks;
+            }
+            else
+            {
+                if (_lib.Sc is not { } sc) throw new InvalidOperationException("подключите SoundCloud");
+                list = ScFilter((await sc.RelatedAsync(t)).OrderBy(_ => Random.Shared.Next()), new HashSet<string> { t.Key });
+                _waveSource = Source.SoundCloud; _session = null; _vibeSeed = t;
+            }
+            list = list.Where(x => x.Key != t.Key).ToList();
+            if (list.Count == 0) throw new InvalidOperationException("похожего не нашлось");
+            _lib.Mark(list);
+            VibeKey = t.Key;
+            _queue = new List<Track> { t };
+            _queue.AddRange(list);
+            _index = 0;
+            SetContext(PlayContext.Vibe, null, t.Source, "Эфир по вайбу · " + t.Title);
+            SetBusy(false);
+            if (!IsPlaying) _mp.Play();
+            Toast?.Invoke($"Дальше — похожее на «{t.Title}»");
+        }
+        catch (Exception e)
+        {
+            Log.Write("vibe: " + e.Message);
+            SetBusy(false);
+            Toast?.Invoke("Не получилось: " + e.Message);
+        }
+    }
+
+    /// <summary>Repeat the current track.</summary>
+    public bool Repeat
+    {
+        get => _mp.IsLoopingEnabled;
+        set { _mp.IsLoopingEnabled = value; Changed?.Invoke(); }
+    }
+
+    /// <summary>Shuffles what comes after the current track.</summary>
+    public void ShuffleRest()
+    {
+        if (_queue.Count - _index < 3) return;
+        var rest = _queue.Skip(_index + 1).OrderBy(_ => Random.Shared.Next()).ToList();
+        _queue = _queue.Take(_index + 1).Concat(rest).ToList();
+        Toast?.Invoke("Дальше — вперемешку");
+    }
+
     public Task PlayActivityAsync(string name, string seed) =>
         StartYandexWave(new[] { seed }, PlayContext.Mix, "act:" + seed, "Занятие · " + name);
 
@@ -353,7 +423,7 @@ public sealed class PlayerService
 
     // ------------------------------------------------------------------ queue
 
-    private bool IsWave => Context is PlayContext.MyWave or PlayContext.Mix;
+    public bool IsWave => Context is PlayContext.MyWave or PlayContext.Mix or PlayContext.Vibe;
 
     private async Task GoTo(int idx)
     {
@@ -430,14 +500,15 @@ public sealed class PlayerService
                 more = new List<Track>();
                 for (var attempt = 0; attempt < 3 && ScFilter(more, known0).Count < 4; attempt++)
                 {
-                    if (_settings.ScGenre is { } g && attempt % 2 == 1)
+                    if (Context != PlayContext.Vibe && _settings.ScGenre is { } g && attempt % 2 == 1)
                     {
                         more.AddRange(await sc.SearchAsync(g, _scGenreOffset));
                         _scGenreOffset += 40;
                     }
                     else
                     {
-                        var seed = attempt == 0 && Current is { Source: Source.SoundCloud } cur ? cur
+                        var seed = Context == PlayContext.Vibe && _vibeSeed is { } vs ? (attempt == 0 ? vs : new[] { vs }.Concat(_queue.TakeLast(4)).OrderBy(_ => Random.Shared.Next()).First())
+                                 : attempt == 0 && Current is { Source: Source.SoundCloud } cur ? cur
                                  : _settings.ScGenre is null ? PickScSeed() : _queue[Random.Shared.Next(_queue.Count)];
                         more.AddRange(await sc.RelatedAsync(seed));
                     }

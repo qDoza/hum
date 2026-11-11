@@ -22,6 +22,7 @@ public sealed class Hub
     /// <summary>The Яндекс | SoundCloud switch changed (it is shared by «Эфир» and «Поиск»).</summary>
     public event Action? SourceChanged;
     public event Action<string>? Toast;
+    public void RaiseToast(string message) => Toast?.Invoke(message);
 
     public Hub(Dispatcher ui)
     {
@@ -75,7 +76,9 @@ public sealed class Hub
 /// <summary>Click on a track row plays that list starting from the row.</summary>
 public static class Rows
 {
-    public static void Attach(ListBox list, Func<IList<Track>> tracks, PlayContext ctx, string title)
+    public static void Attach(ListBox list, Func<IList<Track>> tracks, PlayContext ctx, string title) => Attach(list, tracks, ctx, () => title);
+
+    public static void Attach(ListBox list, Func<IList<Track>> tracks, PlayContext ctx, Func<string> title)
     {
         list.MouseLeftButtonUp += (_, e) =>
         {
@@ -85,7 +88,7 @@ public static class Rows
             var idx = all.IndexOf(t);
             if (idx < 0) return;
             if (App.Hub.Player.Current?.Key == t.Key) { App.Hub.Player.Toggle(); return; }
-            App.Hub.Player.PlayList(all, idx, ctx, title);
+            App.Hub.Player.PlayList(all, idx, ctx, title());
         };
     }
 }
@@ -103,6 +106,6 @@ public static class Tabs
     public static void Paint(IEnumerable<Button> tabs, Button active)
     {
         foreach (var t in tabs)
-            t.Foreground = (Brush)Application.Current.FindResource(t == active ? "TextMain" : "Dim");
+            t.Foreground = (Brush)Application.Current.FindResource(t == active ? "Accent" : "Dim");
     }
 }

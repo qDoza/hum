@@ -37,6 +37,9 @@ public sealed class Settings
     public string? DiscordAppId { get; set; }
     public bool DiscordEnabled { get; set; } = true;
 
+    /// <summary>«Оформление»: colours, font, shapes, player and visualizer.</summary>
+    public LookSettings Look { get; set; } = new();
+
     public static Settings Load()
     {
         try

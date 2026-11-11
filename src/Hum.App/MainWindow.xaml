@@ -6,10 +6,10 @@
         Title="HUM" Width="900" Height="680" MinWidth="720" MinHeight="520"
         WindowStyle="None" AllowsTransparency="True" Background="Transparent" ResizeMode="CanResizeWithGrip"
         WindowStartupLocation="CenterScreen"
-        FontFamily="{StaticResource UiFont}" Foreground="{StaticResource TextMain}"
+        FontFamily="{DynamicResource UiFont}" Foreground="{DynamicResource TextMain}"
         UseLayoutRounding="True" TextOptions.TextFormattingMode="Ideal">
 
-    <Border x:Name="Card" CornerRadius="14" Background="{StaticResource Bg}" BorderBrush="#2C2C2C" BorderThickness="1" Margin="10">
+    <Border x:Name="Card" CornerRadius="14" Background="{DynamicResource Bg}" BorderBrush="#2C2C2C" BorderThickness="1" Margin="10">
         <Border.Effect><DropShadowEffect BlurRadius="22" ShadowDepth="5" Direction="270" Opacity="0.55"/></Border.Effect>
         <Grid>
             <Grid.RowDefinitions>
@@ -26,8 +26,8 @@
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                     <Viewbox Width="22" Height="22">
                         <Canvas Width="48" Height="48">
-                            <Path Data="{StaticResource HumRing}" Stroke="{StaticResource TextMain}" StrokeThickness="3.6"/>
-                            <Path Data="{StaticResource HumWave}" Stroke="{StaticResource TextMain}" StrokeThickness="3.6" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
+                            <Path Data="{StaticResource HumRing}" Stroke="{DynamicResource TextMain}" StrokeThickness="3.6"/>
+                            <Path Data="{StaticResource HumWave}" Stroke="{DynamicResource TextMain}" StrokeThickness="3.6" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
                         </Canvas>
                     </Viewbox>
                     <TextBlock Text="HUM" FontSize="15" FontWeight="Bold" Margin="10,0,0,0" VerticalAlignment="Center"/>
@@ -35,7 +35,7 @@
 
                 <Grid x:Name="TabHost" Grid.Column="1" Margin="24,0,0,0" VerticalAlignment="Center">
                     <Canvas IsHitTestVisible="False">
-                        <Border x:Name="TabBlob" Height="34" CornerRadius="10" Background="{StaticResource Panel}"/>
+                        <Border x:Name="TabBlob" Height="34" CornerRadius="10" Background="{DynamicResource Panel}"/>
                     </Canvas>
                     <StackPanel Orientation="Horizontal">
                         <Button x:Name="TabWave" Style="{StaticResource Bare}" Height="34" Padding="0" m:Press.Enabled="True">
@@ -51,15 +51,26 @@
                 </Grid>
 
                 <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Button x:Name="LookBtn" Style="{StaticResource IconButton}" ToolTip="Оформление" Margin="0,0,6,0" m:Press.Enabled="True"/>
                     <Button x:Name="AccountsBtn" Style="{StaticResource IconButton}" Content="&#xE77B;" ToolTip="Аккаунты" m:Press.Enabled="True"/>
                     <Button x:Name="MinBtn" Style="{StaticResource IconButton}" Content="&#xE921;" FontSize="10" Margin="6,0,0,0" ToolTip="Свернуть" m:Press.Enabled="True"/>
                     <Button x:Name="CloseBtn" Style="{StaticResource IconButton}" Content="&#xE8BB;" FontSize="10" Margin="6,0,0,0" ToolTip="Спрятать в трей" m:Press.Enabled="True"/>
                 </StackPanel>
 
+                <!-- «Оформление» popup -->
+                <Popup x:Name="LookPopup" Grid.Column="3" PlacementTarget="{Binding ElementName=LookBtn}" Placement="Bottom"
+                       HorizontalOffset="-300" VerticalOffset="8" StaysOpen="False" AllowsTransparency="True" PopupAnimation="Fade">
+                    <Border Background="{DynamicResource Panel}" BorderBrush="#2C2C2C" BorderThickness="1" CornerRadius="12" Width="360" MaxHeight="600">
+                        <ScrollViewer Style="{StaticResource BarlessScroll}" m:SmoothScroll.Mode="Vertical" VerticalScrollBarVisibility="Auto">
+                            <StackPanel x:Name="LookList" Margin="14"/>
+                        </ScrollViewer>
+                    </Border>
+                </Popup>
+
                 <!-- accounts popup -->
                 <Popup x:Name="AccountsPopup" Grid.Column="3" PlacementTarget="{Binding ElementName=AccountsBtn}" Placement="Bottom"
                        HorizontalOffset="-240" VerticalOffset="8" StaysOpen="False" AllowsTransparency="True" PopupAnimation="Fade">
-                    <Border Background="{StaticResource Panel}" BorderBrush="#2C2C2C" BorderThickness="1" CornerRadius="12" Padding="14" Width="280">
+                    <Border Background="{DynamicResource Panel}" BorderBrush="#2C2C2C" BorderThickness="1" CornerRadius="12" Padding="14" Width="280">
                         <StackPanel x:Name="AccountsList"/>
                     </Border>
                 </Popup>
@@ -78,6 +89,7 @@
             <ui:NowPlaying x:Name="Bar" Grid.Row="2"/>
 
             <ui:CoverView x:Name="CoverPage" Grid.RowSpan="3" Visibility="Collapsed"/>
+            <ui:ArtistView x:Name="ArtistPage" Grid.RowSpan="3" Visibility="Collapsed"/>
 
             <Border x:Name="Toast" Grid.Row="1" VerticalAlignment="Bottom" HorizontalAlignment="Center" Margin="16,0,16,16"
                     Background="#222222" BorderBrush="#333333" BorderThickness="1" CornerRadius="10" Padding="14,9" Opacity="0" IsHitTestVisible="False">

@@ -59,6 +59,7 @@ public partial class App : Application
         }) { IsBackground = true, Name = "show-signal" }.Start();
 
         Hub = new Hub(Dispatcher);
+        Look.Apply();
         _main = new MainWindow();
         _flyout = new FlyoutWindow();
         _tray = new TrayIcon();
@@ -84,6 +85,14 @@ public partial class App : Application
 
         await Hub.Library.StartAsync();
         if (e.Args.Contains("--probe")) await Probe();
+        if (e.Args.Contains("--look")) { _main!.BringUp(); await System.Threading.Tasks.Task.Delay(800); _main.OpenLook(); }
+        // debug aid: start the first liked Yandex track and open the full player
+        if (e.Args.Contains("--player") && Hub.Library.Liked.FirstOrDefault(t => t.Source == Source.Yandex) is { } firstYa)
+        {
+            Hub.Player.PlayList(Hub.Library.Liked.ToList(), Hub.Library.Liked.IndexOf(firstYa), PlayContext.Likes, "Любимое");
+            _main!.ShowCover();
+            if (e.Args.Contains("--artist") && firstYa.Artists.Count > 0) { await System.Threading.Tasks.Task.Delay(2500); _main.OpenArtist(firstYa.Artists[0].Id, firstYa.Artists[0].Name); }
+        }
     }
 
     /// <summary>Debug aid: silently checks SoundCloud playback and Yandex lyrics on the real accounts, logs the outcome, quits.</summary>

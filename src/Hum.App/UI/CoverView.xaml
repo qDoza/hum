@@ -3,49 +3,137 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:ui="clr-namespace:Hum.App.UI"
              xmlns:m="clr-namespace:Hum.App.Motion"
-             Foreground="{StaticResource TextMain}" FontFamily="{StaticResource UiFont}">
-    <Border x:Name="Shade" CornerRadius="14" Background="{StaticResource Bg}">
-        <Grid x:Name="Body" RenderTransformOrigin="0.5,0.5">
-            <Grid.RenderTransform><ScaleTransform x:Name="BodyScale"/></Grid.RenderTransform>
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="400"/>
-                <ColumnDefinition/>
-            </Grid.ColumnDefinitions>
+             Foreground="{DynamicResource TextMain}" FontFamily="{DynamicResource UiFont}">
+    <!-- the player: smoked glass over light from the cover, the cover in a live visualizer, lyrics on the right -->
+    <Border x:Name="Shade" CornerRadius="14" Background="#050505" ClipToBounds="True">
+        <Grid x:Name="Root">
+            <!-- light: the cover decoded at a few pixels and smoothly scaled up: a soft blur for free (live blur effects glitch on a transparent window) -->
+            <Canvas x:Name="Light" IsHitTestVisible="False" ClipToBounds="True">
+                <Rectangle x:Name="Glow1" Width="220" Height="220" Opacity="0.55" RenderTransformOrigin="0.5,0.5" RenderOptions.BitmapScalingMode="HighQuality">
+                    <Rectangle.Fill><ImageBrush x:Name="Glow1Img" Stretch="UniformToFill"/></Rectangle.Fill>
+                    <Rectangle.OpacityMask><RadialGradientBrush><GradientStop Color="#FF000000" Offset="0.2"/><GradientStop Color="#00000000" Offset="1"/></RadialGradientBrush></Rectangle.OpacityMask>
+                    <Rectangle.RenderTransform><TransformGroup><ScaleTransform x:Name="Glow1Scale" ScaleX="4.2" ScaleY="4.2"/><RotateTransform x:Name="Glow1Rot"/></TransformGroup></Rectangle.RenderTransform>
+                </Rectangle>
+                <Rectangle x:Name="Glow2" Width="160" Height="160" Opacity="0.35" RenderTransformOrigin="0.5,0.5" RenderOptions.BitmapScalingMode="HighQuality">
+                    <Rectangle.Fill><ImageBrush x:Name="Glow2Img" Stretch="UniformToFill"/></Rectangle.Fill>
+                    <Rectangle.OpacityMask><RadialGradientBrush><GradientStop Color="#FF000000" Offset="0.2"/><GradientStop Color="#00000000" Offset="1"/></RadialGradientBrush></Rectangle.OpacityMask>
+                    <Rectangle.RenderTransform><TransformGroup><ScaleTransform ScaleX="4" ScaleY="4"/><RotateTransform x:Name="Glow2Rot"/></TransformGroup></Rectangle.RenderTransform>
+                </Rectangle>
+            </Canvas>
+            <!-- the smoked glass -->
+            <Rectangle x:Name="Smoke" IsHitTestVisible="False" Fill="#940A0A0C"/>
+            <Rectangle IsHitTestVisible="False">
+                <Rectangle.Fill>
+                    <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                        <GradientStop Color="#0DFFFFFF" Offset="0"/>
+                        <GradientStop Color="#00FFFFFF" Offset="0.25"/>
+                        <GradientStop Color="#00000000" Offset="0.7"/>
+                        <GradientStop Color="#73000000" Offset="1"/>
+                    </LinearGradientBrush>
+                </Rectangle.Fill>
+            </Rectangle>
 
-            <!-- the cover, big, plus the player -->
-            <StackPanel Margin="36,40,12,24" VerticalAlignment="Center">
-                <Grid Width="340" Height="340" HorizontalAlignment="Left">
-                    <Rectangle RadiusX="16" RadiusY="16" Fill="{StaticResource Chip}"/>
-                    <Rectangle RadiusX="16" RadiusY="16">
-                        <Rectangle.Fill><ImageBrush x:Name="Cover" Stretch="UniformToFill"/></Rectangle.Fill>
-                        <Rectangle.Effect><DropShadowEffect BlurRadius="40" ShadowDepth="10" Direction="270" Opacity="0.6"/></Rectangle.Effect>
-                    </Rectangle>
+            <Grid x:Name="Body" RenderTransformOrigin="0.5,0.5">
+                <Grid.RenderTransform><ScaleTransform x:Name="BodyScale"/></Grid.RenderTransform>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition x:Name="StageCol" Width="*"/>
+                    <ColumnDefinition x:Name="LyricsCol" Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- left: stage + info + controls -->
+                <Grid Margin="28,16,16,22" MaxWidth="560">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/><RowDefinition/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    <Grid>
+                        <Button x:Name="CloseBtn" Style="{StaticResource Ctl}" HorizontalAlignment="Left" ToolTip="Свернуть (Esc)" m:Press.Enabled="True"/>
+                        <TextBlock x:Name="Ctx" FontSize="11" Foreground="#99FFFFFF" HorizontalAlignment="Center" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" MaxWidth="320"/>
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                            <Button x:Name="MuteBtn" Style="{StaticResource Ctl}" Width="28" Height="28" Foreground="#99FFFFFF" m:Press.Enabled="True"/>
+                            <ui:ProgressLine x:Name="Vol" Width="80" Margin="2,0,0,0"/>
+                        </StackPanel>
+                    </Grid>
+
+                    <Grid x:Name="Stage" Grid.Row="1" Margin="-28,0,-16,0" ClipToBounds="False">
+                        <ui:VisualizerView x:Name="Viz"/>
+                        <Grid x:Name="CoverBox" Width="240" Height="240" RenderTransformOrigin="0.5,0.5" Cursor="Hand">
+                            <Grid.RenderTransform><TransformGroup><ScaleTransform x:Name="CoverScale"/><RotateTransform x:Name="CoverRot"/><TranslateTransform x:Name="CoverShake"/></TransformGroup></Grid.RenderTransform>
+                            <Border x:Name="CoverShadow" Background="#1B1B1B" CornerRadius="120">
+                                <Border.Effect><DropShadowEffect BlurRadius="40" ShadowDepth="10" Direction="270" Opacity="0.6"/></Border.Effect>
+                            </Border>
+                            <Border x:Name="CoverImg" CornerRadius="120"><Border.Background><ImageBrush x:Name="Cover" Stretch="UniformToFill"/></Border.Background></Border>
+                        </Grid>
+                    </Grid>
+
+                    <Grid Grid.Row="2" Margin="0,6,0,0">
+                        <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                        <StackPanel>
+                            <TextBlock x:Name="Title" FontSize="24" FontWeight="Bold" TextTrimming="CharacterEllipsis"/>
+                            <WrapPanel x:Name="Artists" Margin="0,2,0,0"/>
+                        </StackPanel>
+                        <Button x:Name="LikeBtn" Grid.Column="1" Style="{StaticResource Ctl}" VerticalAlignment="Center" ToolTip="Нравится" m:Press.Enabled="True"/>
+                    </Grid>
+                    <WrapPanel x:Name="Tags" Grid.Row="3" Margin="0,10,0,0"/>
+
+                    <StackPanel Grid.Row="4" Margin="0,10,0,0">
+                        <ui:ProgressLine x:Name="Seek"/>
+                        <Grid Margin="0,1,0,0">
+                            <TextBlock x:Name="Pos" FontSize="11" Foreground="#8CFFFFFF"/>
+                            <TextBlock x:Name="Dur" FontSize="11" Foreground="#8CFFFFFF" HorizontalAlignment="Right"/>
+                        </Grid>
+                        <Grid Margin="0,6,0,0">
+                            <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="Auto"/><ColumnDefinition/></Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Center">
+                                <Button x:Name="LeftBtn" Style="{StaticResource Ctl}" Margin="0,0,10,0" m:Press.Enabled="True"/>
+                                <Button x:Name="PrevBtn" Style="{StaticResource Ctl}" Width="44" Height="44" ToolTip="Назад" m:Press.Enabled="True"/>
+                                <Button x:Name="PlayBtn" Style="{StaticResource PlayButton}" Width="60" Height="60" Margin="10,0" m:Press.Enabled="True"/>
+                                <Button x:Name="NextBtn" Style="{StaticResource Ctl}" Width="44" Height="44" ToolTip="Дальше" m:Press.Enabled="True"/>
+                                <Button x:Name="RepeatBtn" Style="{StaticResource Ctl}" Margin="10,0,0,0" ToolTip="Повтор трека" m:Press.Enabled="True"/>
+                            </StackPanel>
+
+                        </Grid>
+                    </StackPanel>
+
+                    <!-- «Эфир по вайбу» -->
+                    <Button x:Name="VibeBtn" Grid.Row="5" Style="{StaticResource Bare}" Margin="0,14,0,0" m:Press.Enabled="True">
+                        <Border Background="#12FFFFFF" BorderBrush="#17FFFFFF" BorderThickness="1" CornerRadius="16" Padding="10,9">
+                            <Grid>
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                                <Border x:Name="VibeIcon" Width="38" Height="38" CornerRadius="19">
+                                    <Viewbox Width="22" Height="22">
+                                        <Canvas Width="48" Height="48">
+                                            <Path x:Name="VibeRing" Data="{StaticResource HumRing}" StrokeThickness="3.8"/>
+                                            <Path x:Name="VibeWave" Data="{StaticResource HumWave}" StrokeThickness="3.8" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
+                                        </Canvas>
+                                    </Viewbox>
+                                </Border>
+                                <StackPanel Grid.Column="1" Margin="12,0,10,0" VerticalAlignment="Center">
+                                    <TextBlock Text="Эфир по вайбу" FontSize="13.5" FontWeight="SemiBold"/>
+                                    <TextBlock x:Name="VibeSub" FontSize="11.5" Foreground="#99FFFFFF" TextTrimming="CharacterEllipsis"/>
+                                </StackPanel>
+                                <Border x:Name="VibeGo" Grid.Column="2" Background="{DynamicResource Accent}" CornerRadius="14" Padding="12,6" VerticalAlignment="Center">
+                                    <TextBlock x:Name="VibeGoText" Text="Запустить" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource OnAccent}"/>
+                                </Border>
+                            </Grid>
+                        </Border>
+                    </Button>
                 </Grid>
-                <TextBlock x:Name="Title" FontSize="24" FontWeight="Bold" Margin="0,22,0,0" TextTrimming="CharacterEllipsis" MaxWidth="340" HorizontalAlignment="Left"/>
-                <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
-                    <Border BorderBrush="#333333" BorderThickness="1" CornerRadius="4" Padding="4,0" Margin="0,0,8,0" VerticalAlignment="Center">
-                        <TextBlock x:Name="Tag" FontSize="10" FontWeight="SemiBold" Foreground="{StaticResource Muted}"/>
-                    </Border>
-                    <TextBlock x:Name="Artist" FontSize="14" Foreground="{StaticResource Muted}" TextTrimming="CharacterEllipsis" MaxWidth="300"/>
-                </StackPanel>
-                <ui:NowPlaying x:Name="Player" Width="340" HorizontalAlignment="Left" Margin="0,8,0,0"/>
-            </StackPanel>
 
-            <!-- lyrics -->
-            <Grid Grid.Column="1" Margin="12,24,40,24">
-                <ScrollViewer x:Name="LyricsScroll" Style="{StaticResource BarlessScroll}" m:SmoothScroll.Mode="Vertical"
-                              VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-                    <!-- top/bottom padding is set from code to half the viewport, so any line can sit in the middle -->
-                    <StackPanel x:Name="Lines"/>
-                </ScrollViewer>
-                <StackPanel x:Name="NoLyrics" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="0,0,0,64">
-                    <TextBlock Text="&#xE8D6;" FontFamily="{StaticResource Glyphs}" FontSize="28" Foreground="{StaticResource Dim}" HorizontalAlignment="Center"/>
-                    <TextBlock x:Name="NoLyricsText" Style="{StaticResource Caption}" FontSize="13" Margin="0,10,0,0" TextAlignment="Center" TextWrapping="Wrap" MaxWidth="280"/>
-                </StackPanel>
+                <!-- right: lyrics -->
+                <Grid x:Name="LyricsPane" Grid.Column="1" Margin="12,56,40,24">
+                    <ScrollViewer x:Name="LyricsScroll" Style="{StaticResource BarlessScroll}" m:SmoothScroll.Mode="Vertical"
+                                  VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                        <StackPanel x:Name="Lines"/>
+                    </ScrollViewer>
+                    <StackPanel x:Name="NoLyrics" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="0,0,0,64">
+                        <TextBlock Text="&#xE8D6;" FontFamily="{StaticResource Glyphs}" FontSize="28" Foreground="#66FFFFFF" HorizontalAlignment="Center"/>
+                        <TextBlock x:Name="NoLyricsText" FontSize="13" Foreground="#99FFFFFF" Margin="0,10,0,0" TextAlignment="Center" TextWrapping="Wrap" MaxWidth="280"/>
+                    </StackPanel>
+                </Grid>
+
+                <Button x:Name="LyricsBtn" Grid.ColumnSpan="2" Style="{StaticResource Ctl}" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,16,16,0"
+                        ToolTip="Текст песни" m:Press.Enabled="True"/>
             </Grid>
-
-            <Button x:Name="CloseBtn" Grid.Column="1" Style="{StaticResource IconButton}" Content="&#xE8BB;" FontSize="10"
-                    HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,14,14,0" ToolTip="Закрыть (Esc)" m:Press.Enabled="True"/>
         </Grid>
     </Border>
 </UserControl>

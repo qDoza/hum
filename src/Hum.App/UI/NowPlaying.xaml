@@ -3,19 +3,19 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:ui="clr-namespace:Hum.App.UI"
              xmlns:m="clr-namespace:Hum.App.Motion"
-             Foreground="{StaticResource TextMain}" FontFamily="{StaticResource UiFont}">
+             Foreground="{DynamicResource TextMain}" FontFamily="{DynamicResource UiFont}">
     <!-- Variant: Card (flyout «Эфир»), Mini (flyout other tabs), Bar (window bottom) — set from code -->
     <Grid>
         <!-- ========== card ========== -->
-        <Border x:Name="Card" Background="{StaticResource Panel}" CornerRadius="12" Padding="10" Margin="0,12,0,0">
+        <Border x:Name="Card" Background="{DynamicResource Panel}" CornerRadius="12" Padding="10" Margin="0,12,0,0">
             <StackPanel>
                 <Grid>
                     <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-                    <Rectangle Width="52" Height="52" RadiusX="9" RadiusY="9" Fill="{StaticResource Chip}"/>
+                    <Rectangle Width="52" Height="52" RadiusX="9" RadiusY="9" Fill="{DynamicResource Chip}"/>
                     <Rectangle Width="52" Height="52" RadiusX="9" RadiusY="9" Cursor="Hand" ToolTip="Обложка и текст" MouseLeftButtonUp="OnCoverClick"><Rectangle.Fill><ImageBrush x:Name="CardCover" Stretch="UniformToFill"/></Rectangle.Fill></Rectangle>
                     <StackPanel Grid.Column="1" Margin="12,0,6,0" VerticalAlignment="Center">
                         <TextBlock x:Name="CardTitle" Text="Ничего не играет" FontSize="14" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
-                        <TextBlock x:Name="CardSub" Text="Нажмите «Мой эфир»" FontSize="12" Foreground="{StaticResource Muted}" TextTrimming="CharacterEllipsis"/>
+                        <TextBlock x:Name="CardSub" Text="Нажмите «Мой эфир»" FontSize="12" Foreground="{DynamicResource Muted}" TextTrimming="CharacterEllipsis"/>
                     </StackPanel>
                     <Button x:Name="CardLike" Grid.Column="2" Style="{StaticResource Ctl}" Content="&#xEB51;" ToolTip="Нравится" m:Press.Enabled="True"/>
                 </Grid>
@@ -23,7 +23,7 @@
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto"/><ColumnDefinition/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
-                    <Button x:Name="CardDislike" Style="{StaticResource Ctl}" Content="&#xE733;" Foreground="{StaticResource Muted}" ToolTip="Не нравится" m:Press.Enabled="True"/>
+                    <Button x:Name="CardDislike" Style="{StaticResource Ctl}" Content="&#xE733;" Foreground="{DynamicResource Muted}" ToolTip="Не нравится" m:Press.Enabled="True"/>
                     <ui:ProgressLine x:Name="CardProgress" Grid.Column="1" Margin="6,0" VerticalAlignment="Center"/>
                     <Button x:Name="CardPrev" Grid.Column="2" Style="{StaticResource Ctl}" Content="&#xE892;" FontSize="13" ToolTip="Назад" m:Press.Enabled="True"/>
                     <Button x:Name="CardPlay" Grid.Column="3" Style="{StaticResource PlayButton}" Content="&#xE768;" Margin="2,0" m:Press.Enabled="True"/>
@@ -32,10 +32,10 @@
                 <!-- time + volume -->
                 <Grid Margin="8,2,4,0">
                     <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="110"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-                    <TextBlock x:Name="CardTime" Text="0:00 / 0:00" FontSize="11" Foreground="{StaticResource Muted}" VerticalAlignment="Center"/>
-                    <Button x:Name="CardMute" Grid.Column="2" Style="{StaticResource Ctl}" Width="28" Height="28" FontSize="13" Content="&#xE767;" Foreground="{StaticResource Muted}" ToolTip="Без звука" m:Press.Enabled="True"/>
+                    <TextBlock x:Name="CardTime" Text="0:00 / 0:00" FontSize="11" Foreground="{DynamicResource Muted}" VerticalAlignment="Center"/>
+                    <Button x:Name="CardMute" Grid.Column="2" Style="{StaticResource Ctl}" Width="28" Height="28" FontSize="13" Content="&#xE767;" Foreground="{DynamicResource Muted}" ToolTip="Без звука" m:Press.Enabled="True"/>
                     <ui:ProgressLine x:Name="CardVolume" Grid.Column="3" Margin="4,0,0,0" VerticalAlignment="Center"/>
-                    <TextBlock x:Name="CardVolText" Grid.Column="4" Width="30" TextAlignment="Right" FontSize="11" Foreground="{StaticResource Muted}" VerticalAlignment="Center"/>
+                    <TextBlock x:Name="CardVolText" Grid.Column="4" Width="30" TextAlignment="Right" FontSize="11" Foreground="{DynamicResource Muted}" VerticalAlignment="Center"/>
                 </Grid>
             </StackPanel>
         </Border>
@@ -44,11 +44,11 @@
         <Border x:Name="Mini" BorderBrush="#1F1F1F" BorderThickness="0,1,0,0" Padding="18,8,12,8" Visibility="Collapsed">
             <Grid>
                 <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-                <Rectangle Width="32" Height="32" RadiusX="6" RadiusY="6" Fill="{StaticResource Chip}"/>
+                <Rectangle Width="32" Height="32" RadiusX="6" RadiusY="6" Fill="{DynamicResource Chip}"/>
                 <Rectangle Width="32" Height="32" RadiusX="6" RadiusY="6" Cursor="Hand" ToolTip="Обложка и текст" MouseLeftButtonUp="OnCoverClick"><Rectangle.Fill><ImageBrush x:Name="MiniCover" Stretch="UniformToFill"/></Rectangle.Fill></Rectangle>
                 <StackPanel Grid.Column="1" Margin="10,0,6,0" VerticalAlignment="Center">
                     <TextBlock x:Name="MiniTitle" Text="Ничего не играет" FontSize="12" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
-                    <TextBlock x:Name="MiniSub" FontSize="12" Foreground="{StaticResource Muted}" TextTrimming="CharacterEllipsis"/>
+                    <TextBlock x:Name="MiniSub" FontSize="12" Foreground="{DynamicResource Muted}" TextTrimming="CharacterEllipsis"/>
                 </StackPanel>
                 <Button x:Name="MiniPlay" Grid.Column="2" Style="{StaticResource Ctl}" Content="&#xE768;" Width="32" Height="32" FontSize="13" m:Press.Enabled="True"/>
                 <Button x:Name="MiniNext" Grid.Column="3" Style="{StaticResource Ctl}" Content="&#xE893;" Width="32" Height="32" FontSize="12" m:Press.Enabled="True"/>
@@ -61,22 +61,22 @@
                 <Grid.ColumnDefinitions><ColumnDefinition Width="230"/><ColumnDefinition/><ColumnDefinition Width="230"/></Grid.ColumnDefinitions>
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                     <Grid>
-                        <Rectangle Width="44" Height="44" RadiusX="8" RadiusY="8" Fill="{StaticResource Chip}"/>
+                        <Rectangle Width="44" Height="44" RadiusX="8" RadiusY="8" Fill="{DynamicResource Chip}"/>
                         <Rectangle Width="44" Height="44" RadiusX="8" RadiusY="8" Cursor="Hand" ToolTip="Обложка и текст" MouseLeftButtonUp="OnCoverClick"><Rectangle.Fill><ImageBrush x:Name="BarCover" Stretch="UniformToFill"/></Rectangle.Fill></Rectangle>
                     </Grid>
                     <StackPanel Margin="12,0,0,0" VerticalAlignment="Center" Width="170">
                         <TextBlock x:Name="BarTitle" Text="Ничего не играет" FontSize="13" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
                         <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
                             <Border x:Name="BarTag" BorderBrush="#333333" BorderThickness="1" CornerRadius="4" Padding="4,0" Margin="0,0,6,0" VerticalAlignment="Center" Visibility="Collapsed">
-                                <TextBlock x:Name="BarTagText" FontSize="9.5" FontWeight="SemiBold" Foreground="{StaticResource Muted}"/>
+                                <TextBlock x:Name="BarTagText" FontSize="9.5" FontWeight="SemiBold" Foreground="{DynamicResource Muted}"/>
                             </Border>
-                            <TextBlock x:Name="BarSub" FontSize="12" Foreground="{StaticResource Muted}" TextTrimming="CharacterEllipsis" MaxWidth="140"/>
+                            <TextBlock x:Name="BarSub" FontSize="12" Foreground="{DynamicResource Muted}" TextTrimming="CharacterEllipsis" MaxWidth="140"/>
                         </StackPanel>
                     </StackPanel>
                 </StackPanel>
                 <StackPanel Grid.Column="1" VerticalAlignment="Center">
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                        <Button x:Name="BarDislike" Style="{StaticResource Ctl}" Content="&#xE733;" Foreground="{StaticResource Muted}" ToolTip="Не нравится" m:Press.Enabled="True"/>
+                        <Button x:Name="BarDislike" Style="{StaticResource Ctl}" Content="&#xE733;" Foreground="{DynamicResource Muted}" ToolTip="Не нравится" m:Press.Enabled="True"/>
                         <Button x:Name="BarPrev" Style="{StaticResource Ctl}" Content="&#xE892;" FontSize="13" m:Press.Enabled="True"/>
                         <Button x:Name="BarPlay" Style="{StaticResource PlayButton}" Content="&#xE768;" Width="38" Height="38" Margin="4,0" m:Press.Enabled="True"/>
                         <Button x:Name="BarNext" Style="{StaticResource Ctl}" Content="&#xE893;" FontSize="13" m:Press.Enabled="True"/>
@@ -84,13 +84,13 @@
                     </StackPanel>
                     <Grid Margin="0,2,0,0" MaxWidth="420">
                         <Grid.ColumnDefinitions><ColumnDefinition Width="40"/><ColumnDefinition/><ColumnDefinition Width="40"/></Grid.ColumnDefinitions>
-                        <TextBlock x:Name="BarPos" Text="0:00" FontSize="11" Foreground="{StaticResource Muted}" VerticalAlignment="Center"/>
+                        <TextBlock x:Name="BarPos" Text="0:00" FontSize="11" Foreground="{DynamicResource Muted}" VerticalAlignment="Center"/>
                         <ui:ProgressLine x:Name="BarProgress" Grid.Column="1"/>
-                        <TextBlock x:Name="BarDur" Grid.Column="2" Text="0:00" FontSize="11" Foreground="{StaticResource Muted}" VerticalAlignment="Center" HorizontalAlignment="Right"/>
+                        <TextBlock x:Name="BarDur" Grid.Column="2" Text="0:00" FontSize="11" Foreground="{DynamicResource Muted}" VerticalAlignment="Center" HorizontalAlignment="Right"/>
                     </Grid>
                 </StackPanel>
                 <StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
-                    <TextBlock Text="&#xE767;" FontFamily="{StaticResource Glyphs}" FontSize="14" Foreground="{StaticResource Muted}" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                    <TextBlock Text="&#xE767;" FontFamily="{StaticResource Glyphs}" FontSize="14" Foreground="{DynamicResource Muted}" VerticalAlignment="Center" Margin="0,0,8,0"/>
                     <ui:ProgressLine x:Name="Volume" Width="96"/>
                 </StackPanel>
             </Grid>

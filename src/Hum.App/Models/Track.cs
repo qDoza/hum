@@ -9,6 +9,9 @@ public enum Source { Yandex, SoundCloud }
 
 public sealed record ScTranscoding(string Url, string Protocol, string Mime);
 
+/// <summary>A performer with a page of their own (Yandex only).</summary>
+public sealed record ArtistRef(string Id, string Name);
+
 /// <summary>One track from either service; the UI never cares which one.</summary>
 public sealed class Track : INotifyPropertyChanged
 {
@@ -24,6 +27,11 @@ public sealed class Track : INotifyPropertyChanged
     /// <summary>SoundCloud upload / release date (used by the «Свежее» filter).</summary>
     public DateTime? Released { get; init; }
     public string? Genre { get; init; }
+    public int? Year { get; init; }
+    /// <summary>Year for the tags: the album year (Yandex) or the release date (SoundCloud).</summary>
+    public int? YearShown => Year ?? Released?.Year;
+    /// <summary>Yandex artists with ids, so their names can open the artist page.</summary>
+    public IReadOnlyList<ArtistRef> Artists { get; init; } = Array.Empty<ArtistRef>();
     /// <summary>Yandex knows whether a track has lyrics (plain and/or time-synced) before asking for them.</summary>
     public bool HasLyrics { get; init; }
     public bool HasSyncedLyrics { get; init; }

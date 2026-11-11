@@ -24,6 +24,24 @@ public partial class App : Application
         AppDomain.CurrentDomain.UnhandledException += (_, ex) => Log.Write("fatal: " + ex.ExceptionObject);
         Log.Write("start");
 
+        // hum.exe --pair-qr <file.png> [ttlSeconds]: write a one-time iPhone pairing QR to a file and exit
+        var pq = Array.IndexOf(e.Args, "--pair-qr");
+        if (pq >= 0 && pq + 1 < e.Args.Length)
+        {
+            try
+            {
+                var st = Settings.Load();
+                var ttl = pq + 2 < e.Args.Length && int.TryParse(e.Args[pq + 2], out var t) ? t : 900;
+                var link = await Pairing.CreateLinkAsync(st.YandexToken, st.ScToken, st.WebAppUrl, ttl);
+                System.IO.File.WriteAllBytes(e.Args[pq + 1], Pairing.QrPng(link, 12));
+                if (Environment.GetEnvironmentVariable("HUM_PAIR_LINK_FILE") is { Length: > 0 } lf) System.IO.File.WriteAllText(lf, link);   // testing only
+                Log.Write($"pair-qr written, ttl {ttl}s");
+            }
+            catch (Exception ex) { Log.Write("pair-qr: " + ex.Message); }
+            Shutdown();
+            return;
+        }
+
         // single instance: launching the exe again just opens the window of the running copy
         var showSignal = new EventWaitHandle(false, EventResetMode.AutoReset, @"Local\Hum.Show");
         _single = new Mutex(true, @"Local\Hum.SingleInstance", out var first);

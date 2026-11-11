@@ -129,6 +129,26 @@ public partial class MainWindow : Window
         reload.Content = new TextBlock { Text = "Обновить лайки", FontSize = 12, TextDecorations = TextDecorations.Underline, Foreground = (Brush)FindResource("TextMain") };
         reload.Click += (_, _) => { AccountsPopup.IsOpen = false; _ = App.Hub.Library.ReloadLikesAsync(); };
         AccountsList.Children.Add(reload);
+
+        // the iPhone version: hand both accounts over through a QR code
+        var lib2 = App.Hub.Library;
+        var pair = new Button
+        {
+            Style = (Style)FindResource("Bare"), Margin = new Thickness(0, 12, 0, 0), HorizontalAlignment = HorizontalAlignment.Stretch,
+            IsEnabled = lib2.Has(Source.Yandex) || lib2.Has(Source.SoundCloud),
+            Content = new Border
+            {
+                Background = (Brush)FindResource("TextMain"), CornerRadius = new CornerRadius(9), Padding = new Thickness(12, 8, 12, 8),
+                Child = new TextBlock { Text = "Подключить iPhone", FontSize = 12.5, FontWeight = FontWeights.SemiBold, Foreground = Brushes.Black, HorizontalAlignment = HorizontalAlignment.Center },
+            },
+        };
+        pair.Click += (_, _) =>
+        {
+            AccountsPopup.IsOpen = false;
+            var s = App.Hub.Settings;
+            new PairWindow(lib2.Has(Source.Yandex) ? s.YandexToken : null, lib2.Has(Source.SoundCloud) ? s.ScToken : null, s.WebAppUrl) { Owner = this }.ShowDialog();
+        };
+        AccountsList.Children.Add(pair);
         AccountsList.Children.Add(new Border { Height = 1, Background = (Brush)FindResource("Line"), Margin = new Thickness(0, 14, 0, 12) });
         AccountsList.Children.Add(DiscordSection());
     }

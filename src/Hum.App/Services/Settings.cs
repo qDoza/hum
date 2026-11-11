@@ -30,6 +30,9 @@ public sealed class Settings
     public bool ScOnlyNew { get; set; }
     public bool ScFresh { get; set; }
 
+    /// <summary>Where the iPhone version lives (the Cloudflare Worker from HumWeb).</summary>
+    public string WebAppUrl { get; set; } = "https://hum.qdoza.workers.dev";
+
     /// <summary>Discord Application ID for «Слушает HUM»; empty = presence off.</summary>
     public string? DiscordAppId { get; set; }
     public bool DiscordEnabled { get; set; } = true;

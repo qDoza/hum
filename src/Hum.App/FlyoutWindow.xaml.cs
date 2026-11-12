@@ -33,6 +33,7 @@ public partial class FlyoutWindow : Window
         TabWave.Click += (_, _) => ShowTab(0, true);
         TabLikes.Click += (_, _) => ShowTab(1, true);
         TabSearch.Click += (_, _) => ShowTab(2, true);
+        Wave.AllLikesRequested += () => ShowTab(1, true);
         OpenButton.Click += (_, _) => { CloseFlyout(); OpenWindowRequested?.Invoke(); };
         PinButton.Click += (_, _) =>
         {

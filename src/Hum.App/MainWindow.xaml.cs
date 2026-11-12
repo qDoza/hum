@@ -30,6 +30,7 @@ public partial class MainWindow : Window
         TabWave.Click += (_, _) => ShowTab(0);
         TabLikes.Click += (_, _) => ShowTab(1);
         TabSearch.Click += (_, _) => ShowTab(2);
+        Wave.AllLikesRequested += () => ShowTab(1);
         Header.MouseLeftButtonDown += (_, e) =>
         {
             if (e.ClickCount == 2) WindowState = WindowState == WindowState.Maximized ? WindowState.Normal : WindowState.Maximized;

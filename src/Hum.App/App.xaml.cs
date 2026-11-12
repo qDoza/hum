@@ -87,10 +87,11 @@ public partial class App : Application
         if (e.Args.Contains("--probe")) await Probe();
         if (e.Args.Contains("--look")) { _main!.BringUp(); await System.Threading.Tasks.Task.Delay(800); _main.OpenLook(); }
         // debug aid: start the first liked Yandex track and open the full player
-        if (e.Args.Contains("--player") && Hub.Library.Liked.FirstOrDefault(t => t.Source == Source.Yandex) is { } firstYa)
+        if (e.Args.Contains("--player") && Hub.Library.Liked.FirstOrDefault(t => t.Source == Source.Yandex && (!e.Args.Contains("--lyrics") || t.HasSyncedLyrics)) is { } firstYa)
         {
             Hub.Player.PlayList(Hub.Library.Liked.ToList(), Hub.Library.Liked.IndexOf(firstYa), PlayContext.Likes, "Любимое");
             _main!.ShowCover();
+            if (e.Args.Contains("--lyrics")) { await System.Threading.Tasks.Task.Delay(3000); _main.ShowLyrics(); }
             if (e.Args.Contains("--artist") && firstYa.Artists.Count > 0) { await System.Threading.Tasks.Task.Delay(2500); _main.OpenArtist(firstYa.Artists[0].Id, firstYa.Artists[0].Name); }
         }
     }

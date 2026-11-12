@@ -217,6 +217,7 @@ public partial class MainWindow : Window
 
     public void OpenArtist(string id, string name) => ArtistPage.Open(id, name);
     public void OpenLook() { BuildLook(); LookPopup.IsOpen = true; }
+    public void ShowLyrics() => CoverPage.OpenLyrics();
 
     // ------------------------------------------------------------------ «Оформление»
 

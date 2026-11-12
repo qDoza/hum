@@ -120,7 +120,9 @@
                 </Grid>
 
                 <!-- right: «Дальше / Похожее / Недавнее» with the artist, and below it (scroll down or «Текст») the lyrics -->
-                <Grid x:Name="RightPane" Grid.Column="1" Margin="8,16,28,22" ClipToBounds="True">
+                <Grid x:Name="RightPane" Grid.Column="1" Margin="8,16,28,22" ClipToBounds="True" TextOptions.TextRenderingMode="Grayscale">
+                    <!-- a Canvas does not clip its child to the slot, so the lower page survives the slide -->
+                    <Canvas x:Name="SlideHost">
                     <Grid x:Name="Slider" VerticalAlignment="Top">
                         <Grid.RenderTransform><TranslateTransform x:Name="SlideY"/></Grid.RenderTransform>
                         <Grid.RowDefinitions><RowDefinition x:Name="Page1Row" Height="400"/><RowDefinition x:Name="Page2Row" Height="400"/></Grid.RowDefinitions>
@@ -174,6 +176,7 @@
                             </StackPanel>
                         </Grid>
                     </Grid>
+                    </Canvas>
                 </Grid>
             </Grid>
         </Grid>

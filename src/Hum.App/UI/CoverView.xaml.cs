@@ -351,11 +351,14 @@ public partial class CoverView : UserControl
         if (open) Dispatcher.BeginInvoke(() => Follow(force: true), System.Windows.Threading.DispatcherPriority.Loaded);
     }
 
+    public void OpenLyrics() => SetLyrics(true);
+
     private void LayoutPages()
     {
         var h = Math.Max(100, RightPane.ActualHeight);
         Page1Row.Height = Page2Row.Height = new GridLength(h);
         Slider.Height = h * 2;
+        Slider.Width = Math.Max(100, RightPane.ActualWidth);
         SlideY.Y = _lyricsOpen ? -h : 0;
     }
 

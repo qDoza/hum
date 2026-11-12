@@ -28,7 +28,10 @@ public partial class CoverView : UserControl
     private readonly AudioMeter _meter = new();
     private string? _trackKey;
     private int _req, _active = -1;
-    private bool _synced, _lyricsOpen = true;
+    private bool _synced, _lyricsOpen;
+    private int _rtab;                       // 0 Дальше, 1 Похожее, 2 Недавнее
+    private string? _similarKey, _artistKey;
+    private List<Track> _similar = new();
     private double _spin;
 
     public event Action? CloseRequested;
@@ -44,7 +47,21 @@ public partial class CoverView : UserControl
         Icons.Set_(PrevBtn, "prev", 22);
         Icons.Set_(NextBtn, "next", 22);
         Icons.Set_(RepeatBtn, "repeat", 18);
-        Icons.Set_(LyricsBtn, "lyrics", 18);
+        LyricsIcon.Content = Icons.Make("lyrics", 15);
+        BuildTabs();
+        QueueList.MouseLeftButtonUp += OnQueueClick;
+        ArtistCard.Click += (_, _) => { if (_artistRef is { } a) ArtistRequested?.Invoke(a.Id, a.Name); };
+        BackToQueue.Click += (_, _) => SetLyrics(false);
+        RightPane.SizeChanged += (_, _) => LayoutPages();
+        // scroll down past the list → lyrics; scroll up at the top of the lyrics → back
+        QueuePage.PreviewMouseWheel += (_, e) =>
+        {
+            if (e.Delta < 0 && H.Player.Current is { HasLyrics: true } && AtEnd(QueueList)) { SetLyrics(true); e.Handled = true; }
+        };
+        LyricsPage.PreviewMouseWheel += (_, e) =>
+        {
+            if (e.Delta > 0 && (LyricsScroll.Visibility != Visibility.Visible || LyricsScroll.VerticalOffset <= 1)) { SetLyrics(false); e.Handled = true; }
+        };
 
         var p = H.Player;
         PlayBtn.Click += (_, _) => p.Toggle();
@@ -64,6 +81,7 @@ public partial class CoverView : UserControl
         CoverBox.MouseLeftButtonDown += (_, e) => { if (e.ClickCount == 2 && p.Current is { } t && !H.Library.IsLiked(t)) { _ = H.Library.ToggleLikeAsync(t); Viz.Kick = 1; } };
 
         p.Changed += OnTrack;
+        p.Changed += () => { if (Visibility == Visibility.Visible) RefreshQueue(); };
         p.Progress += () => { Follow(); RenderProgress(); };
         H.Library.Changed += RenderButtons;
         LyricsScroll.SizeChanged += (_, _) => { Pad(); Follow(force: true); };
@@ -181,6 +199,8 @@ public partial class CoverView : UserControl
         TintFrom(t);
         Animator.Tween(0.5, x => { var e = Ease.OutExpo(x); Title.Opacity = e; Artists.Opacity = e; });
         LoadLyrics(t);
+        if (_lyricsOpen && t?.HasLyrics != true) SetLyrics(false);
+        RefreshQueue();
     }
 
 /// <summary>The cover at 8 px: scaled up smoothly it becomes the soft light behind the glass (the shared cache keeps bigger copies).</summary>
@@ -208,7 +228,7 @@ public partial class CoverView : UserControl
         var vibeOn = t is not null && p.Context == PlayContext.Vibe && p.VibeKey == t.Key;
         VibeSub.Text = t is null ? "Включите трек" : vibeOn ? "Играет: похожее на этот трек" : $"Похожее по звучанию на «{t.Title}»";
         VibeGoText.Text = vibeOn ? "Играет" : "Запустить";
-        LyricsBtn.Foreground = _lyricsOpen ? new SolidColorBrush(Look.Accent) : Brushes.White;
+
     }
 
     private void RenderProgress()
@@ -321,12 +341,138 @@ public partial class CoverView : UserControl
 
     private void SetLyrics(bool open)
     {
+        if (_lyricsOpen == open) return;
         _lyricsOpen = open;
-        LyricsCol.Width = open ? new GridLength(1, GridUnitType.Star) : new GridLength(0);
-        LyricsPane.Visibility = open ? Visibility.Visible : Visibility.Collapsed;
+        var from = SlideY.Y;
+        var to = open ? -RightPane.ActualHeight : 0;
+        Animator.Tween(0.55, t => SlideY.Y = Ease.Lerp(from, to, Ease.OutExpo(t)));
         BuildTags(H.Player.Current);
         RenderButtons();
         if (open) Dispatcher.BeginInvoke(() => Follow(force: true), System.Windows.Threading.DispatcherPriority.Loaded);
+    }
+
+    private void LayoutPages()
+    {
+        var h = Math.Max(100, RightPane.ActualHeight);
+        Page1Row.Height = Page2Row.Height = new GridLength(h);
+        Slider.Height = h * 2;
+        SlideY.Y = _lyricsOpen ? -h : 0;
+    }
+
+    // ------------------------------------------------------------------ right side: Дальше / Похожее / Недавнее
+
+    private readonly List<Button> _rtabs = new();
+    private ArtistRef? _artistRef;
+
+    private void BuildTabs()
+    {
+        var names = new[] { "Дальше", "Похожее", "Недавнее" };
+        for (var i = 0; i < names.Length; i++)
+        {
+            var idx = i;
+            var b = new Button { Style = (Style)FindResource("Bare"), Margin = new Thickness(0, 0, 6, 0), Content = new Border { CornerRadius = new CornerRadius(14), Padding = new Thickness(12, 6, 12, 6), Child = new TextBlock { Text = names[i], FontSize = 12 } } };
+            Motion.Press.SetEnabled(b, true);
+            b.Click += (_, _) => { _rtab = idx; PaintTabs(); RefreshQueue(); };
+            _rtabs.Add(b);
+            RTabs.Children.Add(b);
+        }
+        PaintTabs();
+    }
+
+    private void PaintTabs()
+    {
+        for (var i = 0; i < _rtabs.Count; i++)
+        {
+            var on = i == _rtab;
+            var bd = (Border)_rtabs[i].Content;
+            bd.Background = on ? (Brush)FindResource("Accent") : new SolidColorBrush(Color.FromArgb(0x14, 255, 255, 255));
+            ((TextBlock)bd.Child).Foreground = on ? (Brush)FindResource("OnAccent") : new SolidColorBrush(Color.FromArgb(0xC0, 255, 255, 255));
+            ((TextBlock)bd.Child).FontWeight = on ? FontWeights.SemiBold : FontWeights.Normal;
+        }
+    }
+
+    private async void RefreshQueue()
+    {
+        var p = H.Player;
+        var t = p.Current;
+        List<Track> list;
+        if (_rtab == 0) list = p.Upcoming(9).ToList();
+        else if (_rtab == 2) list = p.Recent.Skip(t is null ? 0 : 1).ToList();
+        else
+        {
+            if (t is not null && _similarKey != t.Key)
+            {
+                _similarKey = t.Key;
+                _similar = new();
+                QueueEmpty.Text = "Подбираю похожее…";
+                try
+                {
+                    var key = t.Key;
+                    var found = t.Source == Source.Yandex && H.Library.Ya is { } ya ? await ya.SimilarAsync(t)
+                              : t.Source == Source.SoundCloud && H.Library.Sc is { } sc ? await sc.RelatedAsync(t) : new List<Track>();
+                    if (key != H.Player.Current?.Key) return;
+                    H.Library.Mark(found);
+                    _similar = found.Take(20).ToList();
+                }
+                catch (Exception e) { Log.Write("similar: " + e.Message); }
+                if (_rtab != 1) return;
+            }
+            list = _similar;
+        }
+        QueueList.ItemsSource = list;
+        QueueEmpty.Text = list.Count > 0 ? "" : _rtab == 0 ? "Очередь пуста" : _rtab == 1 ? "Похожего не нашлось" : "Здесь появятся треки, которые вы слушали";
+        QueueEmpty.Visibility = list.Count > 0 ? Visibility.Collapsed : Visibility.Visible;
+        ScrollHint.Visibility = t?.HasLyrics == true ? Visibility.Visible : Visibility.Collapsed;
+        LyricsBtn.Visibility = t?.HasLyrics == true ? Visibility.Visible : Visibility.Collapsed;
+        UpdateArtist(t);
+    }
+
+    private void OnQueueClick(object sender, MouseButtonEventArgs e)
+    {
+        if (ItemsControl.ContainerFromElement(QueueList, (DependencyObject)e.OriginalSource) is not ListBoxItem item || item.DataContext is not Track t) return;
+        var p = H.Player;
+        if (p.Current?.Key == t.Key) { p.Toggle(); return; }
+        if (_rtab == 0) { p.JumpTo(t); return; }
+        var list = ((IEnumerable<Track>)QueueList.ItemsSource).ToList();
+        p.PlayList(list, list.IndexOf(t), PlayContext.Search, _rtab == 1 ? "Похожее на «" + (p.Current?.Title ?? "") + "»" : "Недавнее");
+    }
+
+    private async void UpdateArtist(Track? t)
+    {
+        var a = t?.Artists.FirstOrDefault();
+        var key = a?.Id ?? t?.Artist;
+        if (key == _artistKey) return;
+        _artistKey = key;
+        _artistRef = a;
+        ArtistCard.Visibility = t is null ? Visibility.Collapsed : Visibility.Visible;
+        ArtistName.Text = a?.Name ?? t?.Artist ?? "";
+        ArtistSub.Text = t?.Source == Source.SoundCloud ? "SoundCloud" : "";
+        ArtistPhoto.ImageSource = null;
+        ArtistGo.Visibility = a is null ? Visibility.Collapsed : Visibility.Visible;
+        if (a is null || H.Library.Ya is not { } ya) return;
+        try
+        {
+            var b = await ya.ArtistBriefAsync(a.Id);
+            if (_artistKey != a.Id) return;
+            ArtistSub.Text = b.Sub;
+            if (b.PhotoUrl is { } u) ArtistPhoto.ImageSource = Covers.Convert(u, typeof(ImageSource), "120", null!) as ImageSource;
+        }
+        catch (Exception e) { Log.Write("artist card: " + e.Message); }
+    }
+
+    /// <summary>True when a list's scroll is at its end (or it does not scroll at all).</summary>
+    private static bool AtEnd(DependencyObject root)
+    {
+        var sv = FindScroll(root);
+        return sv is null || sv.VerticalOffset >= sv.ScrollableHeight - 1;
+    }
+
+    private static ScrollViewer? FindScroll(DependencyObject d)
+    {
+        if (d is ScrollViewer s) return s;
+        for (var i = 0; i < VisualTreeHelper.GetChildrenCount(d); i++)
+            if (FindScroll(VisualTreeHelper.GetChild(d, i)) is { } f) return f;
+        return null;
     }
 
     private async void LoadLyrics(Track? t)

@@ -232,6 +232,34 @@ public sealed class YandexClient
 
     // ------------------------------------------------------------------ artists
 
+    /// <summary>Tracks Yandex considers similar to this one.</summary>
+    public async Task<List<Track>> SimilarAsync(Track t)
+    {
+        var r = await GetAsync($"tracks/{t.Id.Split(':')[0]}/similar");
+        return (r?["similarTracks"]?.AsArray() ?? new JsonArray()).Select(Parse).OfType<Track>().ToList();
+    }
+
+    public sealed record ArtistBrief(string Name, string? PhotoUrl, string Sub);
+    private readonly Dictionary<string, ArtistBrief> _briefs = new();
+
+    /// <summary>Just the photo and a line about the artist (cached), for the card in the player.</summary>
+    public async Task<ArtistBrief> ArtistBriefAsync(string id)
+    {
+        if (_briefs.TryGetValue(id, out var b)) return b;
+        var r = await GetAsync($"artists/{id}/brief-info") ?? throw new InvalidOperationException("пустой ответ");
+        var a = r["artist"];
+        var img = a?["cover"]?["uri"]?.ToString() ?? a?["ogImage"]?.ToString();
+        var bits = new List<string>();
+        var genres = (a?["genres"]?.AsArray() ?? new JsonArray()).Select(g => g?.ToString()).Where(g => !string.IsNullOrEmpty(g)).Take(2)
+                     .Select(g => Genres.TryGetValue(g!, out var x) ? x : g!).ToList();
+        if (genres.Count > 0) bits.Add(string.Join(", ", genres));
+        if (r["stats"]?["lastMonthListeners"]?.GetValue<long>() is long l and > 0)
+            bits.Add((l >= 1_000_000 ? (l / 1e6).ToString("0.#", CultureInfo.GetCultureInfo("ru-RU")) + " млн" : l >= 1000 ? $"{l / 1000} тыс" : l.ToString()) + " слушателей за месяц");
+        b = new ArtistBrief(a?["name"]?.ToString() ?? "", string.IsNullOrEmpty(img) ? null : "https://" + img.Replace("%%", "200x200"), string.Join(" · ", bits));
+        _briefs[id] = b;
+        return b;
+    }
+
     public sealed record ArtistInfo(string Name, string? PhotoUrl, string Sub, List<Track> Popular, List<Track> All);
 
     /// <summary>An artist's page: photo, genres and listeners, popular tracks, then the rest of their tracks.</summary>

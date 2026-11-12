@@ -8,6 +8,12 @@
     <StackPanel>
         <!-- hero -->
         <Grid x:Name="Hero" Height="300" Margin="-18,0">
+            <!-- aurora: three soft colour clouds drifting behind the ring -->
+            <Canvas x:Name="Aurora" IsHitTestVisible="False" ClipToBounds="True">
+                <Ellipse x:Name="Blob1" Width="260" Height="260"/>
+                <Ellipse x:Name="Blob2" Width="240" Height="240"/>
+                <Ellipse x:Name="Blob3" Width="220" Height="220"/>
+            </Canvas>
             <ui:HeroRings x:Name="Rings"/>
             <!-- source switch -->
             <Border Background="{DynamicResource Panel}" CornerRadius="{DynamicResource R10}" Padding="3" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="18,6,0,0">

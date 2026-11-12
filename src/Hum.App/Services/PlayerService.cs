@@ -175,6 +175,24 @@ public sealed class PlayerService
         }
     }
 
+    // ------------------------------------------------------------------ queue view (the player's right side)
+
+    /// <summary>What plays now and what comes next (the wave keeps growing as you go).</summary>
+    public IReadOnlyList<Track> Upcoming(int count) => _index < 0 ? Array.Empty<Track>() : _queue.Skip(_index).Take(count + 1).ToList();
+
+    /// <summary>Tracks heard in this session, newest first.</summary>
+    public IReadOnlyList<Track> Recent => _recent;
+    private readonly List<Track> _recent = new();
+
+    /// <summary>Jumps to a track that is already in the queue (keeps the wave going).</summary>
+    public void JumpTo(Track t)
+    {
+        var i = _queue.IndexOf(t);
+        if (i < 0 || i == _index) return;
+        SkipFeedback();
+        _ = GoTo(i);
+    }
+
     /// <summary>Repeat the current track.</summary>
     public bool Repeat
     {
@@ -438,6 +456,9 @@ public sealed class PlayerService
         if (Current is { } old) old.IsCurrent = false;
         _index = idx;
         var track = _queue[idx];
+        _recent.Remove(track);
+        _recent.Insert(0, track);
+        if (_recent.Count > 30) _recent.RemoveAt(_recent.Count - 1);
         track.IsCurrent = true;
         var gen = ++_gen;
         _mp.Pause();

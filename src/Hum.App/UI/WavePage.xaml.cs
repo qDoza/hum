@@ -84,6 +84,8 @@ public partial class WavePage : UserControl
         };
         Look.Changed += Paint;
         Hero.SizeChanged += (_, _) => DriftAurora();
+        Aurora.Visibility = Visibility.Collapsed;
+        Rings.ClipToBounds = true;
     }
 
     public object? Top { get => TopSlot.Content; set => TopSlot.Content = value; }
@@ -513,42 +515,59 @@ public sealed class HeroRings : FrameworkElement
         InvalidateVisual();
     }
 
+    // the galaxy: stars orbit the button; each one is drawn as a short arc along its path, which gives
+    // the motion trail without keeping old frames around
+    private readonly (double A, double R, double S, int C, double Z)[] _stars = MakeStars();
+    private static (double, double, double, int, double)[] MakeStars()
+    {
+        var rnd = new Random(7);
+        return Enumerable.Range(0, 420).Select(_ => (rnd.NextDouble() * Math.PI * 2, Math.Pow(rnd.NextDouble(), 0.6), 0.5 + rnd.NextDouble() * 1.4, rnd.Next(5), rnd.NextDouble())).ToArray();
+    }
+    private double _spin;
+
     protected override void OnRender(DrawingContext dc)
     {
         double w = ActualWidth, h = ActualHeight, cx = w / 2, cy = h / 2;
-        var c = Colors[0];
+        if (w <= 0) return;
         var e = Energy;
-        var r0 = Math.Min(w, h) * 0.36 * (1 + e * 0.04);
-        for (var k = 0; k < 5; k++)
+        var R = Math.Min(w, h * 1.4) * 0.6;
+        var push = 1 + e * 0.2;
+        var speed = 0.1 + _level * 0.25 + e * 0.15;
+        _spin += speed * 0.016;
+        var groups = new StreamGeometry[Colors.Length];
+        var ctxs = new StreamGeometryContext[Colors.Length];
+        for (var i = 0; i < Colors.Length; i++) { groups[i] = new StreamGeometry(); ctxs[i] = groups[i].Open(); }
+        foreach (var (a0, r, sz, ci, z) in _stars)
         {
-            var alpha = 0.9 - k * 0.15;
-            // a gradient across the palette whose direction turns slowly, ring by ring
-            var ang = _t * 0.35 + k * 0.9;
-            var br = new LinearGradientBrush { StartPoint = new Point(0.5 - Math.Cos(ang) / 2, 0.5 - Math.Sin(ang) / 2), EndPoint = new Point(0.5 + Math.Cos(ang) / 2, 0.5 + Math.Sin(ang) / 2), Opacity = alpha };
-            for (var i = 0; i < Colors.Length; i++) br.GradientStops.Add(new GradientStop(Colors[i], i / (double)Math.Max(1, Colors.Length - 1)));
-            var pen = new Pen(br, k == 0 ? 2.2 : 1.2);
-            pen.Freeze();
-            var g = new StreamGeometry();
-            using (var ctx = g.Open())
-            {
-                var r = r0 * (1 + k * 0.07) + e * k * 5;
-                var amp = (3 + e * 12) * (1 + k * 0.3);
-                for (var i = 0; i <= 180; i++)
-                {
-                    var a = i / 180.0 * Math.PI * 2;
-                    var n = Math.Sin(a * 3 + _t * 0.8 + k * 1.3) * 0.5 + Math.Sin(a * 5 - _t * 1.2 + k * 2.1) * 0.32 + Math.Sin(a * 2 + _t * 0.45 + k) * 0.42;
-                    var pt = new Point(cx + Math.Cos(a) * (r + n * amp), cy + Math.Sin(a) * (r + n * amp));
-                    if (i == 0) ctx.BeginFigure(pt, false, true); else ctx.LineTo(pt, true, true);
-                }
-            }
-            g.Freeze();
-            dc.DrawGeometry(null, pen, g);
+            var ang = a0 + _spin * (1.5 - r) * 6;
+            var rr = (0.16 + r * 0.84) * R * push * (0.93 + 0.07 * Math.Sin(_t * 0.8 + z * 9));
+            var tail = (0.004 + _level * 0.035 + e * 0.03) * (1.5 - r);   // round dots at rest, comet tails while it plays
+            var c = ctxs[ci % ctxs.Length];
+            c.BeginFigure(new Point(cx + Math.Cos(ang - tail) * rr, cy + Math.Sin(ang - tail) * rr * 0.62), false, false);
+            c.LineTo(new Point(cx + Math.Cos(ang) * rr, cy + Math.Sin(ang) * rr * 0.62), true, true);
         }
+        for (var i = 0; i < groups.Length; i++)
+        {
+            ctxs[i].Close();
+            groups[i].Freeze();
+            var col = Colors[i];
+            var glow = new Pen(new SolidColorBrush(Color.FromArgb(0x38, col.R, col.G, col.B)), 6 + e * 3) { StartLineCap = PenLineCap.Round, EndLineCap = PenLineCap.Round };
+            var core = new Pen(new SolidColorBrush(Color.FromArgb(0xF0, col.R, col.G, col.B)), 2.4 + e * 1.2) { StartLineCap = PenLineCap.Round, EndLineCap = PenLineCap.Round };
+            glow.Freeze(); core.Freeze();
+            dc.DrawGeometry(null, glow, groups[i]);
+            dc.DrawGeometry(null, core, groups[i]);
+        }
+        // a soft core of light behind «Мой эфир», brighter on the beat
+        var mid = Colors[Colors.Length / 2];
+        var light = new RadialGradientBrush(Color.FromArgb((byte)(40 + e * 60), mid.R, mid.G, mid.B), Color.FromArgb(0, mid.R, mid.G, mid.B));
+        light.Freeze();
+        dc.DrawEllipse(light, null, new Point(cx, cy), R * 0.5, R * 0.38);
         if (_burst < 1)
         {
             var k = Ease.OutExpo(_burst);
-            var pen = new Pen(new SolidColorBrush(Color.FromArgb((byte)((1 - _burst) * 200), c.R, c.G, c.B)), 2);
-            dc.DrawEllipse(null, pen, new Point(cx, cy), 60 + k * 220, 60 + k * 220);
+            var c0 = Colors[0];
+            var pen = new Pen(new SolidColorBrush(Color.FromArgb((byte)((1 - _burst) * 200), c0.R, c0.G, c0.B)), 2);
+            dc.DrawEllipse(null, pen, new Point(cx, cy), 60 + k * 220, (60 + k * 220) * 0.62);
         }
     }
 }

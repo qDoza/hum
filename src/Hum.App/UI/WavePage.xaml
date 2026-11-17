@@ -7,14 +7,22 @@
     <!-- «Эфир», design A: a living ring around «Мой эфир», mood chips, round mixes, recent likes -->
     <StackPanel>
         <!-- hero -->
-        <Grid x:Name="Hero" Height="300" Margin="-18,0">
+        <Grid x:Name="Hero" Height="430" Margin="-18,-8,-18,0">
             <!-- aurora: three soft colour clouds drifting behind the ring -->
             <Canvas x:Name="Aurora" IsHitTestVisible="False" ClipToBounds="True">
                 <Ellipse x:Name="Blob1" Width="260" Height="260"/>
                 <Ellipse x:Name="Blob2" Width="240" Height="240"/>
                 <Ellipse x:Name="Blob3" Width="220" Height="220"/>
             </Canvas>
-            <ui:HeroRings x:Name="Rings"/>
+            <ui:HeroNebula x:Name="Rings">
+                <!-- soft side edges, so the nebula melts into the window instead of ending in a box -->
+                <ui:HeroNebula.OpacityMask>
+                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                        <GradientStop Color="#00000000" Offset="0"/><GradientStop Color="#FF000000" Offset="0.12"/>
+                        <GradientStop Color="#FF000000" Offset="0.88"/><GradientStop Color="#00000000" Offset="1"/>
+                    </LinearGradientBrush>
+                </ui:HeroNebula.OpacityMask>
+            </ui:HeroNebula>
             <!-- source switch -->
             <Border Background="{DynamicResource Panel}" CornerRadius="{DynamicResource R10}" Padding="3" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="18,6,0,0">
                 <StackPanel Orientation="Horizontal">
@@ -23,13 +31,16 @@
                 </StackPanel>
             </Border>
             <Button x:Name="TuneBtn" Style="{StaticResource IconButton}" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,6,18,0" ToolTip="Настройки эфира" m:Press.Enabled="True"/>
-            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
-                <TextBlock x:Name="HeroName" Text="Мой эфир" FontSize="30" FontWeight="Bold" HorizontalAlignment="Center" RenderTransformOrigin="0.5,0.5">
+            <StackPanel HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="22,0,110,22">
+                <TextBlock x:Name="HeroKick" Text="ЯНДЕКС  ·  ЭФИР" FontSize="11" FontWeight="SemiBold" Foreground="#A0FFFFFF"/>
+                <TextBlock x:Name="HeroName" Text="Мой эфир" FontSize="44" FontWeight="Black" Margin="0,4,0,0" RenderTransformOrigin="0,0.5" Foreground="White">
                     <TextBlock.RenderTransform><ScaleTransform x:Name="NameScale"/></TextBlock.RenderTransform>
+                    <TextBlock.Effect><DropShadowEffect BlurRadius="24" ShadowDepth="0" Opacity="0.6"/></TextBlock.Effect>
                 </TextBlock>
-                <TextBlock x:Name="HeroSub" FontSize="13" Foreground="{DynamicResource Muted}" HorizontalAlignment="Center" Margin="0,4,0,0" TextTrimming="CharacterEllipsis" MaxWidth="240"/>
-                <Button x:Name="HeroPlay" Style="{StaticResource PlayButton}" Width="62" Height="62" Margin="0,16,0,0" HorizontalAlignment="Center" m:Press.Enabled="True"/>
+                <TextBlock x:Name="HeroSub" FontSize="13" Foreground="#B8FFFFFF" Margin="0,6,0,0" TextTrimming="CharacterEllipsis"/>
+                <StackPanel x:Name="MoodTabs" Orientation="Horizontal" Margin="0,14,0,0"/>
             </StackPanel>
+            <Button x:Name="HeroPlay" Style="{StaticResource PlayButton}" Width="68" Height="68" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,22,64" m:Press.Enabled="True"/>
         </Grid>
 
         <!-- not connected -->

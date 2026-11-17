@@ -108,6 +108,29 @@ public partial class WavePage : UserControl
 
     private Color[] _pal = Palette.Moods["mywave"];
 
+    // calm mixes are icy blue, energetic ones a red supernova, fresh ones an aurora, the rest deep space
+    private static readonly Dictionary<string, string> MixScheme = new()
+    {
+        ["mywave"] = "space", ["favorite"] = "space", ["foreign"] = "space", ["sad"] = "space", ["evening"] = "space",
+        ["active"] = "nova", ["party"] = "nova", ["popular"] = "nova", ["drive"] = "nova",
+        ["fun"] = "aurora", ["discover"] = "aurora", ["dig"] = "aurora", ["rusnew"] = "aurora", ["ru"] = "aurora",
+        ["calm"] = "ice", ["focus"] = "ice", ["instrumental"] = "ice", ["rain"] = "ice",
+    };
+    private static readonly Dictionary<string, string> ScScheme = new()
+    {
+        ["lofi"] = "ice", ["ambient"] = "ice", ["jazz"] = "ice", ["phonk"] = "nova", ["trap"] = "nova", ["techno"] = "nova", ["drum and bass"] = "nova",
+        ["hip hop"] = "nova", ["русский рэп"] = "nova", ["house"] = "aurora", ["electronic"] = "aurora", ["indie"] = "aurora", ["pop"] = "aurora", ["hyperpop"] = "aurora",
+    };
+    private string NebulaScheme()
+    {
+        var p = H.Player;
+        if (CurrentSource == Source.SoundCloud) return H.Settings.ScGenre is { } g && ScScheme.TryGetValue(g, out var sg) ? sg : "space";
+        var here = p.ContextSource == Source.Yandex;
+        if (here && p.Context == PlayContext.Mix && p.MixId is { } id && MixScheme.TryGetValue(id, out var m)) return m;
+        if (here && p.IsWave && p.Current is not null) return "space";
+        return MixScheme.GetValueOrDefault(_mood, "space");
+    }
+
     private void Paint()
     {
         _pal = CurrentPalette();
@@ -116,8 +139,10 @@ public partial class WavePage : UserControl
         Blob1.Fill = Cloud(_pal[0]);
         Blob2.Fill = Cloud(_pal[_pal.Length / 2]);
         Blob3.Fill = Cloud(_pal[^1]);
-        HeroPlay.Resources["Accent"] = Palette.Gradient(_pal);
-        HeroPlay.Resources["OnAccent"] = Brushes.Black;
+        HeroPlay.Resources["Accent"] = new SolidColorBrush(Color.FromArgb(0x30, 255, 255, 255));
+        HeroPlay.Resources["OnAccent"] = Brushes.White;
+        Rings.Scheme = NebulaScheme();
+        HeroKick.Text = (CurrentSource == Source.Yandex ? "ЯНДЕКС" : "SOUNDCLOUD") + "  ·  ЭФИР";
     }
 
     private void DriftAurora()
@@ -155,9 +180,23 @@ public partial class WavePage : UserControl
         _builtFor = key;
         _marks.Clear();
         ChipRow.Children.Clear();
+        MoodTabs.Children.Clear();
         MixRow.Children.Clear();
         var p = H.Player;
         var i = 0;
+
+        void AddMoodTab(string title, string mood, Action click, Func<bool> on)
+        {
+            var line = new Border { Height = 1.6, Background = Brushes.White, Margin = new Thickness(0, 5, 0, 0), Opacity = 0 };
+            var sp = new StackPanel();
+            sp.Children.Add(new TextBlock { Text = title, FontSize = 13.5, Foreground = Brushes.White });
+            sp.Children.Add(line);
+            var b = new MoodTab { Style = (Style)FindResource("Bare"), Content = sp, Margin = new Thickness(0, 0, 18, 0), Underline = line, Opacity = 0.6 };
+            b.Click += (_, _) => { _mood = mood; click(); Refresh(); };
+            Press.SetEnabled(b, true);
+            MoodTabs.Children.Add(b);
+            _marks.Add((b, on));
+        }
 
         void AddChip(string title, Action click, Func<bool> on, string? mood = null)
         {
@@ -195,9 +234,10 @@ public partial class WavePage : UserControl
 
         if (src == Source.Yandex)
         {
-            AddChip("Любое", () => { Rings.Burst(); _ = p.PlayMyWaveAsync(Source.Yandex); }, () => p.Context == PlayContext.MyWave && p.ContextSource == Source.Yandex, "mywave");
+            bool Resting() => !(p.IsWave && p.ContextSource == Source.Yandex && p.Current is not null);
+            AddMoodTab("Любое", "mywave", () => { Rings.Burst(); _ = p.PlayMyWaveAsync(Source.Yandex); }, () => p.Context == PlayContext.MyWave && p.ContextSource == Source.Yandex || Resting() && _mood == "mywave");
             foreach (var m in PlayerService.Mixes.Where(m => m.Group == "Настроение" && m.Id != "custom"))
-                AddChip(m.Title, () => { H.Settings.Mix = m.Id; H.Settings.Save(); _ = p.PlayMixAsync(m.Id); }, () => p.Context == PlayContext.Mix && p.MixId == m.Id, m.Id);
+                AddMoodTab(m.Title, m.Id, () => { H.Settings.Mix = m.Id; H.Settings.Save(); _ = p.PlayMixAsync(m.Id); }, () => p.Context == PlayContext.Mix && p.MixId == m.Id || Resting() && _mood == m.Id);
             foreach (var m in PlayerService.Mixes.Where(m => m.Group != "Настроение"))
                 AddMix(m.Title, () => _ = p.PlayMixAsync(m.Id), () => p.Context == PlayContext.Mix && p.MixId == m.Id, m.Id);
             foreach (var (name, seed) in H.Library.Activities)
@@ -313,7 +353,8 @@ public partial class WavePage : UserControl
         foreach (var (el, on) in _marks)
         {
             var isOn = on();
-            if (el is RadioButton rb) rb.IsChecked = isOn;
+            if (el is MoodTab mt) { mt.Opacity = isOn ? 1 : 0.6; mt.Underline!.Opacity = isOn ? 1 : 0; }
+            else if (el is RadioButton rb) rb.IsChecked = isOn;
             else if (el is Button { Tag: Border disc })
             {
                 disc.BorderBrush = isOn ? (Brush)FindResource("Accent") : Brushes.Transparent;
@@ -322,6 +363,12 @@ public partial class WavePage : UserControl
         }
         _sync = false;
     }
+}
+
+/// <summary>A mood as a text tab with an underline (in the hero).</summary>
+public sealed class MoodTab : Button
+{
+    public Border? Underline { get; set; }
 }
 
 /// <summary>Colours of «Мой эфир»: one palette per mood, and three related colours around any single colour.</summary>

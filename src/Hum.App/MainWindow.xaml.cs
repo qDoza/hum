@@ -31,6 +31,11 @@ public partial class MainWindow : Window
         TabLikes.Click += (_, _) => ShowTab(1);
         TabSearch.Click += (_, _) => ShowTab(2);
         Wave.AllLikesRequested += () => ShowTab(1);
+        Wave.UseNebula(Nebula);
+        // the nebula drifts up slower than the page and fades as you scroll
+        WaveHost.ScrollChanged += (_, _) => PlaceNebula();
+        // keep the rounded corners of the window clean
+        Body.SizeChanged += (_, _) => Body.Clip = new RectangleGeometry(new Rect(Body.RenderSize), 13, 13);
         Header.MouseLeftButtonDown += (_, e) =>
         {
             if (e.ClickCount == 2) WindowState = WindowState == WindowState.Maximized ? WindowState.Normal : WindowState.Maximized;
@@ -73,12 +78,24 @@ public partial class MainWindow : Window
         if (!CoverPage.IsVisible) CoverPage.Open();
     }
 
+    private void PlaceNebula()
+    {
+        var y = WaveHost.VerticalOffset;
+        NebulaShift.Y = -y * 0.5;
+        NebulaHost.Opacity = _tab == 0 ? Math.Clamp(1 - y / 420, 0, 1) : 0;
+    }
+
     private void ShowTab(int tab, bool animate = true)
     {
         if (CoverPage.IsVisible) CoverPage.Close();
         if (ArtistPage.IsVisible) ArtistPage.Close();
         _tab = tab;
         Tabs.Paint(_tabs, _tabs[tab]);
+        // the nebula belongs to «Эфир»: it fades out on the other tabs
+        var from = NebulaHost.Opacity;
+        var to = tab == 0 ? Math.Clamp(1 - WaveHost.VerticalOffset / 420, 0, 1) : 0;
+        if (tab == 0) Nebula.Visibility = Visibility.Visible;
+        Animator.Tween(0.35, t => NebulaHost.Opacity = Ease.Lerp(from, to, Ease.OutCubic(t)), () => { if (_tab != 0) Nebula.Visibility = Visibility.Collapsed; });
         Tabs.Place(TabHost, TabBlob, _tabs[tab], animate);
         var pages = new FrameworkElement[] { WaveHost, Likes, Search };
         for (var i = 0; i < pages.Length; i++)

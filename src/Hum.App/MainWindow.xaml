@@ -11,12 +11,19 @@
 
     <Border x:Name="Card" CornerRadius="14" Background="{DynamicResource Bg}" BorderBrush="#2C2C2C" BorderThickness="1" Margin="10">
         <Border.Effect><DropShadowEffect BlurRadius="22" ShadowDepth="5" Direction="270" Opacity="0.55"/></Border.Effect>
-        <Grid>
+        <Grid x:Name="Body">
             <Grid.RowDefinitions>
                 <RowDefinition Height="60"/>
                 <RowDefinition/>
                 <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
+
+            <!-- «Мой эфир» nebula: behind the header and the page, the whole width of the window -->
+            <Grid x:Name="NebulaHost" Grid.RowSpan="2" VerticalAlignment="Top" Height="520" IsHitTestVisible="False" ClipToBounds="True">
+                <ui:HeroNebula x:Name="Nebula" SoftSides="False">
+                    <ui:HeroNebula.RenderTransform><TranslateTransform x:Name="NebulaShift"/></ui:HeroNebula.RenderTransform>
+                </ui:HeroNebula>
+            </Grid>
 
             <!-- header: drag area, logo, tabs, accounts, window buttons -->
             <Grid x:Name="Header" Background="Transparent" Margin="18,0,14,0">

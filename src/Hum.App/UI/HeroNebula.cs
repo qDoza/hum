@@ -46,6 +46,8 @@ public sealed class HeroNebula : FrameworkElement
     private readonly Color[] _starCol = new Color[4];
 
     public bool Active { get; set; }
+    /// <summary>Fade the sides into the page (when it sits in a narrow column).</summary>
+    public bool SoftSides { get; set; } = true;
     public double Energy { get; private set; }
     public Color[] Colors { get; set; } = Array.Empty<Color>();
     public event Action? Frame;
@@ -201,7 +203,7 @@ public sealed class HeroNebula : FrameworkElement
         var shade = new LinearGradientBrush(Color.FromArgb(0, bg.R, bg.G, bg.B), Color.FromArgb(0xE0, bg.R, bg.G, bg.B), 90) { StartPoint = new Point(0, 0.55), EndPoint = new Point(0, 1) };
         dc.DrawRectangle(shade, null, new Rect(0, 0, w, h));
         // and melt into the page at the sides
-        var side = Math.Min(90, w * 0.14);
+        var side = SoftSides ? Math.Min(90, w * 0.14) : 0;
         var l = new LinearGradientBrush(Color.FromArgb(0xFF, bg.R, bg.G, bg.B), Color.FromArgb(0, bg.R, bg.G, bg.B), 0);
         var rgt = new LinearGradientBrush(Color.FromArgb(0, bg.R, bg.G, bg.B), Color.FromArgb(0xFF, bg.R, bg.G, bg.B), 0);
         dc.DrawRectangle(l, null, new Rect(0, 0, side, h));

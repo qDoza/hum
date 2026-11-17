@@ -56,7 +56,7 @@ public partial class WavePage : UserControl
         {
             var p = H.Player;
             if (p.IsWave && p.ContextSource == CurrentSource && p.Current is not null) p.Toggle();
-            else { Rings.Burst(); _ = p.PlayMyWaveAsync(CurrentSource); }
+            else { Neb.Burst(); _ = p.PlayMyWaveAsync(CurrentSource); }
         };
         TuneBtn.Click += (_, _) => ToggleTune();
         ConnectButton.Click += (_, _) => H.Connect(CurrentSource);
@@ -76,12 +76,7 @@ public partial class WavePage : UserControl
         H.SourceChanged += () => { _builtFor = -1; Refresh(); };
         Loaded += (_, _) => { _builtFor = -1; Refresh(); };
         // the name breathes while the wave of this source plays
-        Rings.Frame += () =>
-        {
-            var s = 1 + Rings.Energy * 0.03;
-            NameScale.ScaleX = NameScale.ScaleY = s;
-            DriftAurora();
-        };
+        Rings.Frame += OnNebulaFrame;
         Look.Changed += Paint;
         Hero.SizeChanged += (_, _) => DriftAurora();
         Aurora.Visibility = Visibility.Collapsed;
@@ -89,6 +84,26 @@ public partial class WavePage : UserControl
     }
 
     public object? Top { get => TopSlot.Content; set => TopSlot.Content = value; }
+
+    // the nebula is drawn here (flyout) or by the window behind everything (big window, full width)
+    private HeroNebula? _ext;
+    private HeroNebula Neb => _ext ?? Rings;
+
+    /// <summary>The big window draws the nebula across its whole width; this page then only drives it.</summary>
+    public void UseNebula(HeroNebula n)
+    {
+        Rings.Frame -= OnNebulaFrame;
+        Rings.Visibility = Visibility.Collapsed;
+        _ext = n;
+        n.Frame += OnNebulaFrame;
+        Paint();
+    }
+
+    private void OnNebulaFrame()
+    {
+        var s = 1 + Neb.Energy * 0.03;
+        NameScale.ScaleX = NameScale.ScaleY = s;
+    }
 
     // ------------------------------------------------------------------ colour
 
@@ -134,14 +149,14 @@ public partial class WavePage : UserControl
     private void Paint()
     {
         _pal = CurrentPalette();
-        Rings.Colors = _pal;
+        Neb.Colors = _pal;
         Brush Cloud(Color c) { var b = new RadialGradientBrush(Color.FromArgb(0xA0, c.R, c.G, c.B), Color.FromArgb(0, c.R, c.G, c.B)); b.Freeze(); return b; }
         Blob1.Fill = Cloud(_pal[0]);
         Blob2.Fill = Cloud(_pal[_pal.Length / 2]);
         Blob3.Fill = Cloud(_pal[^1]);
         HeroPlay.Resources["Accent"] = new SolidColorBrush(Color.FromArgb(0x30, 255, 255, 255));
         HeroPlay.Resources["OnAccent"] = Brushes.White;
-        Rings.Scheme = NebulaScheme();
+        Neb.Scheme = NebulaScheme();
         HeroKick.Text = (CurrentSource == Source.Yandex ? "ЯНДЕКС" : "SOUNDCLOUD") + "  ·  ЭФИР";
     }
 
@@ -235,7 +250,7 @@ public partial class WavePage : UserControl
         if (src == Source.Yandex)
         {
             bool Resting() => !(p.IsWave && p.ContextSource == Source.Yandex && p.Current is not null);
-            AddMoodTab("Любое", "mywave", () => { Rings.Burst(); _ = p.PlayMyWaveAsync(Source.Yandex); }, () => p.Context == PlayContext.MyWave && p.ContextSource == Source.Yandex || Resting() && _mood == "mywave");
+            AddMoodTab("Любое", "mywave", () => { Neb.Burst(); _ = p.PlayMyWaveAsync(Source.Yandex); }, () => p.Context == PlayContext.MyWave && p.ContextSource == Source.Yandex || Resting() && _mood == "mywave");
             foreach (var m in PlayerService.Mixes.Where(m => m.Group == "Настроение" && m.Id != "custom"))
                 AddMoodTab(m.Title, m.Id, () => { H.Settings.Mix = m.Id; H.Settings.Save(); _ = p.PlayMixAsync(m.Id); }, () => p.Context == PlayContext.Mix && p.MixId == m.Id || Resting() && _mood == m.Id);
             foreach (var m in PlayerService.Mixes.Where(m => m.Group != "Настроение"))
@@ -346,7 +361,7 @@ public partial class WavePage : UserControl
             : isYa ? $"Яндекс · {DivLabel.GetValueOrDefault(st.Diversity, "Любое")}"
             : $"SoundCloud · {(st.ScGenre is { } g ? PlayerService.ScGenres.FirstOrDefault(x => x.Query == g)?.Title : PlayerService.ScBases.FirstOrDefault(x => x.Id == st.ScBase)?.Title)}";
         Icons.Set_(HeroPlay, mine && p.IsPlaying ? "pause" : "play", 26);
-        Rings.Active = mine && p.IsPlaying;
+        Neb.Active = mine && p.IsPlaying;
         Paint();
 
         // chips and discs follow what plays

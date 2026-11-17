@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Windows;
 using System.Windows.Media;
@@ -31,7 +32,7 @@ public static class Look
 
     public static readonly Option[] Accents =
     {
-        new("mono", "Белый", "#F2F2F2"), new("cover", "По обложке"), new("lime", "Лайм", "#C8F53C"), new("coral", "Коралл", "#FF6A55"),
+        new("mono", "Белый", "#F2F2F2"), new("vibe", "По вайбу"), new("cover", "По обложке"), new("lime", "Лайм", "#C8F53C"), new("coral", "Коралл", "#FF6A55"),
         new("lilac", "Сирень", "#B38CFF"), new("mint", "Мята", "#45E0B0"), new("amber", "Янтарь", "#FFB43D"), new("sky", "Небо", "#58B2FF"),
         new("pink", "Розовый", "#FF5CA8"), new("red", "Красный", "#FF3B3B"),
     };
@@ -63,11 +64,34 @@ public static class Look
 
     private static LookSettings L => App.Hub.Settings.Look;
 
-    /// <summary>The accent right now: a fixed colour, white, or the cover's.</summary>
-    public static Color Accent => L.Accent == "cover" ? CoverColor : Hex(Accents.FirstOrDefault(a => a.Id == L.Accent)?.Hex ?? "#F2F2F2");
+    /// <summary>The accent right now: a fixed colour, white, the cover's, or the nebula's («По вайбу»).</summary>
+    public static Color Accent => L.Accent == "cover" ? CoverColor : L.Accent == "vibe" ? VibeColor : Hex(Accents.FirstOrDefault(a => a.Id == L.Accent)?.Hex ?? "#F2F2F2");
+
+    // «По вайбу»: the light, pastel side of the nebula now on screen
+    private static readonly Dictionary<string, string> Vibes = new() { ["space"] = "#C4B2FF", ["aurora"] = "#86ECD0", ["nova"] = "#FFB08A", ["ice"] = "#9FD0FF" };
+    private static string _vibe = "space";
+    public static Color VibeColor => Hex(Vibes.GetValueOrDefault(_vibe, "#C4B2FF"));
+
+    public static void SetVibe(string scheme)
+    {
+        if (scheme == _vibe) return;
+        _vibe = scheme;
+        if (L.Accent == "vibe") Apply();
+    }
 
     /// <summary>Colour for the visualizer: the accent, unless it is plain white (then the cover's).</summary>
     public static Color VizColor => L.Accent is "mono" or "cover" ? CoverColor : Accent;
+
+    /// <summary>For «По вайбу»: accent surfaces get a soft depth (light top, deeper bottom) instead of a flat fill.</summary>
+    private static Brush AccentBrush(Color c)
+    {
+        if (L.Accent != "vibe") return Frozen(c);
+        var deep = Color.FromRgb((byte)(c.R * 0.72 + 26 * 0.28), (byte)(c.G * 0.72 + 16 * 0.28), (byte)(c.B * 0.72 + 48 * 0.28));
+        var light = Color.FromRgb((byte)Math.Min(255, c.R * 0.92 + 255 * 0.08), (byte)Math.Min(255, c.G * 0.92 + 255 * 0.08), (byte)Math.Min(255, c.B * 0.92 + 255 * 0.08));
+        var b = new LinearGradientBrush(light, deep, 70);
+        b.Freeze();
+        return b;
+    }
 
     public static void SetCoverColor(Color c)
     {
@@ -102,7 +126,7 @@ public static class Look
         Brush("Dim", Hex(L.Contrast == "high" ? "#A3A3A3" : "#7A7A7A"));
 
         var ac = Accent;
-        Brush("Accent", ac);
+        r["Accent"] = AccentBrush(ac);
         Brush("OnAccent", (0.2126 * ac.R + 0.7152 * ac.G + 0.0722 * ac.B) / 255 > 0.5 ? Colors.Black : Colors.White);
 
         var (s, m, l) = L.Shape switch { "sharp" => (2.0, 3.0, 3.0), "pill" => (17.0, 17.0, 20.0), _ => (8.0, 9.0, 10.0) };

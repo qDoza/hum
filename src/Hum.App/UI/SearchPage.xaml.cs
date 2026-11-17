@@ -20,6 +20,7 @@ public partial class SearchPage : UserControl
     public SearchPage()
     {
         InitializeComponent();
+        SrcYa.GroupName = SrcSc.GroupName = "ssrc" + GetHashCode();   // window and flyout copies must not share a group
         _debounce = new DispatcherTimer(TimeSpan.FromMilliseconds(450), DispatcherPriority.Normal, (_, _) => Run(), Dispatcher);
         _debounce.Stop();
         Rows.Attach(List, () => _results, PlayContext.Search, "Поиск");

@@ -39,7 +39,7 @@ public sealed class HeroNebula : FrameworkElement
     private readonly List<(double T0, double K)> _waves = new();
     private readonly List<(Star S, double T0, double Life)> _flares = new();
     private bool _hooked, _armed = true;
-    private double _t, _level, _burst = 1, _mix = 1, _beatPh;
+    private double _t, _level, _burst = 1, _mix = 1, _beatPh, _rot, _spread = 0.45;
     private TimeSpan _last;
     private string _scheme = "space";
     private string? _prev;
@@ -99,7 +99,11 @@ public sealed class HeroNebula : FrameworkElement
         var dt = Math.Min(0.05, (now - _last).TotalSeconds);
         _last = now;
         _t += dt;
-        _level += ((Active ? 1 : 0.12) - _level) * 0.05;
+        // «is it playing» eases over seconds, so a skip or a pause never jerks: the swirl's speed, and the
+        // spread — at rest the stars gather into a loose cluster, with music they open up
+        _level += ((Active ? 1 : 0) - _level) * Math.Min(1, dt / 2.2);
+        _spread += ((Active ? 1 : 0.42) - _spread) * Math.Min(1, dt / 3.2);
+        _rot += dt * (0.55 + _level * 0.45);
         _mix = Math.Min(1, _mix + dt / 1.4);
         // a soft beat while the wave plays (the real spectrum lives in the full player)
         _beatPh = _t * 118 / 60 % 1;
@@ -108,7 +112,7 @@ public sealed class HeroNebula : FrameworkElement
         if (Active && kick > 0.9 && _armed) { _armed = false; _waves.Add((_t, (int)(_t * 118 / 60) % 4 == 0 ? 1 : 0.55)); }
         if (kick < 0.5) _armed = true;
         if (Active && _beatPh * 2 % 1 < dt * 4) for (var i = 0; i < 18; i++) _stars[_rnd.Next(_stars.Length)].Flash = 0.6 + _rnd.NextDouble() * 0.4;
-        _waves.RemoveAll(w => _t - w.T0 > 2.6);
+        _waves.RemoveAll(w => _t - w.T0 > 2.8);
         if (!App.Hub.Settings.Look.ReducedMotion && _rnd.NextDouble() < dt * (0.5 + _level * 1.5)) _flares.Add((_stars[_rnd.Next(_stars.Length)], _t, 0.6 + _rnd.NextDouble() * 0.8));
         _flares.RemoveAll(f => _t - f.T0 > f.Life);
         var target = Schemes[_scheme].Stars.Select(Hex).ToArray();
@@ -129,9 +133,9 @@ public sealed class HeroNebula : FrameworkElement
         var pulse = _waves.Sum(q => Math.Max(0, 1 - (t - q.T0) * 1.6) * q.K);
         (double rot, double sx, double ox, double oy, double a)[] specs =
         {
-            (t * 0.021, 1.25, Math.Sin(t * 0.07) * 0.08, Math.Cos(t * 0.05) * 0.06, 1),
-            (-t * 0.033 + 1.7, 1.05, Math.Cos(t * 0.09 + 1) * 0.12, Math.Sin(t * 0.06 + 2) * 0.1, 0.85),
-            (t * 0.012 + 3.1, 1.55, Math.Sin(t * 0.04 + 4) * 0.1, Math.Sin(t * 0.08) * 0.08, 0.7),
+            (t * 0.012, 1.25, Math.Sin(t * 0.07) * 0.08, Math.Cos(t * 0.05) * 0.06, 1),
+            (-t * 0.018 + 1.7, 1.05, Math.Cos(t * 0.09 + 1) * 0.12, Math.Sin(t * 0.06 + 2) * 0.1, 0.85),
+            (t * 0.007 + 3.1, 1.55, Math.Sin(t * 0.04 + 4) * 0.1, Math.Sin(t * 0.08) * 0.08, 0.7),
         };
         void DrawGas(string key, double alpha)
         {
@@ -139,7 +143,7 @@ public sealed class HeroNebula : FrameworkElement
             for (var i = 0; i < layers.Length; i++)
             {
                 var sp = specs[i];
-                var size = R * 2 * sp.sx * (1 + Math.Sin(t * (0.11 + i * 0.05) + i) * 0.06 + pulse * 0.03);
+                var size = R * 2 * sp.sx * (0.5 + _spread * 0.5) * (1 + Math.Sin(t * (0.11 + i * 0.05) + i) * 0.06 + pulse * 0.03);
                 var tg = new TransformGroup();
                 tg.Children.Add(new ScaleTransform(1, 0.78));
                 tg.Children.Add(new RotateTransform(sp.rot * 180 / Math.PI));
@@ -159,24 +163,29 @@ public sealed class HeroNebula : FrameworkElement
         foreach (var p in _stars)
         {
             double px, py, rr;
+            var own = Math.Pow(_spread, 0.6 + (p.Tpow - 1) / 5 * 0.9);      // each star gathers in by its own amount
+            var churn = (1 - _spread) * R * 0.05;                            // and the cluster slowly churns
             if (p.Drift)
             {
-                p.Dx += Math.Sin(p.Dy * 3 + t * 0.2) * 0.016 * 0.02; p.Dy += Math.Cos(p.Dx * 3 - t * 0.15) * 0.016 * 0.02;
-                double fx = (p.A * 0.15 + t * 0.008 * p.Spd + p.Dx * 0.05) % 1, fy = (p.R + t * 0.004 * p.Spd + p.Dy * 0.05) % 1;
-                px = (fx + 1) % 1 * w; py = (fy + 1) % 1 * h; rr = Math.Sqrt((px - cx) * (px - cx) + (py - cy) * (py - cy));
+                p.Dx += Math.Sin(p.Dy * 3 + t * 0.12) * 0.016 * 0.012; p.Dy += Math.Cos(p.Dx * 3 - t * 0.09) * 0.016 * 0.012;
+                double fx = (p.A * 0.15 + t * 0.005 * p.Spd + p.Dx * 0.05) % 1, fy = (p.R + t * 0.0025 * p.Spd + p.Dy * 0.05) % 1;
+                px = (fx + 1) % 1 * w; py = (fy + 1) % 1 * h;
+                px = cx + (px - cx) * (0.25 + own * 0.75); py = cy + (py - cy) * (0.25 + own * 0.75);
             }
             else
             {
-                var ang = p.A + t * 0.02 * p.Spd * (1.7 - p.R) * (1 + _level * 0.6);
-                rr = p.R * R * 0.9 * (1 + Math.Sin(t * p.Wf + p.Wp) * p.Wa * 3);
-                px = cx + Math.Cos(ang) * rr + Math.Sin(t * p.Wf * 1.3 + p.Wp) * p.Wa * w;
-                py = cy + Math.Sin(ang) * rr * 0.75 + Math.Cos(t * p.Wf + p.Wp) * p.Wa * h * 0.5;
+                var ang = p.A + _rot * 0.012 * p.Spd * (1.7 - p.R);
+                rr = p.R * R * 0.9 * (0.3 + own * 0.7) * (1 + Math.Sin(t * p.Wf * 0.6 + p.Wp) * p.Wa * 3);
+                px = cx + Math.Cos(ang) * rr + Math.Sin(t * p.Wf * 0.8 + p.Wp) * p.Wa * w * (0.4 + own * 0.6);
+                py = cy + Math.Sin(ang) * rr * 0.75 + Math.Cos(t * p.Wf * 0.6 + p.Wp) * p.Wa * h * 0.5 * (0.4 + own * 0.6);
             }
+            px += Math.Sin(t * 0.21 + p.Wp * 3) * churn; py += Math.Cos(t * 0.17 + p.Tp * 2) * churn * 0.8;
+            rr = Math.Sqrt((px - cx) * (px - cx) + (py - cy) * (py - cy));
             var bright = 0.25 + 0.75 * Math.Pow((Math.Sin(t * p.Tf + p.Tp) + 1) / 2, p.Tpow);
             foreach (var (t0, k) in _waves)
             {
                 var age = t - t0 - p.Lag; if (age < 0) continue;
-                var dd = rr - age * R * 0.8;
+                var dd = rr - age * R * 0.55;
                 var g = Math.Exp(-(dd * dd) / (2 * Math.Pow(R * 0.04, 2))) * k * p.Gain * Math.Max(0, 1 - age / 2.4);
                 bright += g; px += (px - cx) / (rr + 1) * g * R * 0.02; py += (py - cy) / (rr + 1) * g * R * 0.02;
             }

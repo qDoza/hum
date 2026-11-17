@@ -82,7 +82,7 @@ public partial class MainWindow : Window
     {
         var y = WaveHost.VerticalOffset;
         NebulaShift.Y = -y * 0.5;
-        NebulaHost.Opacity = _tab == 0 ? Math.Clamp(1 - y / 420, 0, 1) : 0;
+        NebulaHost.Opacity = _tab == 0 ? Math.Clamp(1 - y / 420, 0, 1) : 0.55;
     }
 
     private void ShowTab(int tab, bool animate = true)
@@ -93,9 +93,9 @@ public partial class MainWindow : Window
         Tabs.Paint(_tabs, _tabs[tab]);
         // the nebula belongs to «Эфир»: it fades out on the other tabs
         var from = NebulaHost.Opacity;
-        var to = tab == 0 ? Math.Clamp(1 - WaveHost.VerticalOffset / 420, 0, 1) : 0;
-        if (tab == 0) Nebula.Visibility = Visibility.Visible;
-        Animator.Tween(0.35, t => NebulaHost.Opacity = Ease.Lerp(from, to, Ease.OutCubic(t)), () => { if (_tab != 0) Nebula.Visibility = Visibility.Collapsed; });
+        var to = tab == 0 ? Math.Clamp(1 - WaveHost.VerticalOffset / 420, 0, 1) : 0.55;
+        Nebula.Visibility = Visibility.Visible;
+        Animator.Tween(0.6, t => NebulaHost.Opacity = Ease.Lerp(from, to, Ease.OutCubic(t)));
         Tabs.Place(TabHost, TabBlob, _tabs[tab], animate);
         var pages = new FrameworkElement[] { WaveHost, Likes, Search };
         for (var i = 0; i < pages.Length; i++)
@@ -251,7 +251,7 @@ public partial class MainWindow : Window
         var sw = new WrapPanel();
         foreach (var a in Services.Look.Accents)
         {
-            Brush fill = a.Hex is { } h ? new SolidColorBrush(Services.Look.Hex(h)) : new LinearGradientBrush(new GradientStopCollection
+            Brush fill = a.Hex is { } h ? new SolidColorBrush(Services.Look.Hex(h)) : a.Id == "vibe" ? new RadialGradientBrush(Color.FromRgb(0xC4, 0xB2, 0xFF), Color.FromRgb(0x1B, 0x14, 0x64)) : new LinearGradientBrush(new GradientStopCollection
             {
                 new(Color.FromRgb(0xFF, 0x6A, 0x55), 0), new(Color.FromRgb(0xFF, 0xB4, 0x3D), 0.25), new(Color.FromRgb(0x45, 0xE0, 0xB0), 0.5),
                 new(Color.FromRgb(0x58, 0xB2, 0xFF), 0.75), new(Color.FromRgb(0xB3, 0x8C, 0xFF), 1),

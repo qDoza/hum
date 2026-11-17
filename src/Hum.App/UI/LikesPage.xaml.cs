@@ -18,6 +18,8 @@ public partial class LikesPage : UserControl
     public LikesPage()
     {
         InitializeComponent();
+        // each copy of the page (window and tray flyout) gets its own radio group, or they uncheck each other
+        FAll.GroupName = FYa.GroupName = FSc.GroupName = "lf" + GetHashCode();
         _view = new ListCollectionView(H.Library.Liked) { Filter = Match };
         List.ItemsSource = _view;
         Rows.Attach(List, () => _view.Cast<Track>().ToList(), PlayContext.Likes, "Любимое");

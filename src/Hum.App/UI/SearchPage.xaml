@@ -6,13 +6,18 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition/>
         </Grid.RowDefinitions>
-        <Border Background="{DynamicResource Panel}" CornerRadius="10" Padding="3">
-            <UniformGrid Columns="2">
-                <RadioButton x:Name="SrcYa" Style="{StaticResource Seg}" GroupName="ssrc" Content="Яндекс"/>
-                <RadioButton x:Name="SrcSc" Style="{StaticResource Seg}" GroupName="ssrc" Content="SoundCloud"/>
-            </UniformGrid>
-        </Border>
-        <TextBox x:Name="Query" Grid.Row="1" Style="{StaticResource Search}" Tag="Найти песню или исполнителя" Margin="0,12,0,0"/>
+        <StackPanel Margin="2,44,0,0">
+            <TextBlock Text="ЯНДЕКС  ·  SOUNDCLOUD" FontSize="11" FontWeight="SemiBold" Foreground="#A0FFFFFF"/>
+            <TextBlock Text="Поиск" FontSize="44" FontWeight="Black" Margin="0,4,0,0" Foreground="White">
+                <TextBlock.Effect><DropShadowEffect BlurRadius="24" ShadowDepth="0" Opacity="0.55"/></TextBlock.Effect>
+            </TextBlock>
+            <TextBlock Text="Песни и исполнители" FontSize="13" Foreground="#B8FFFFFF" Margin="0,6,0,0"/>
+            <StackPanel Orientation="Horizontal" Margin="0,18,0,0">
+                <RadioButton x:Name="SrcYa" Style="{StaticResource TextTab}" GroupName="ssrc" Content="Яндекс"/>
+                <RadioButton x:Name="SrcSc" Style="{StaticResource TextTab}" GroupName="ssrc" Content="SoundCloud"/>
+            </StackPanel>
+        </StackPanel>
+        <TextBox x:Name="Query" Grid.Row="1" Style="{StaticResource Search}" Tag="Найти песню или исполнителя" Margin="0,14,0,0"/>
         <TextBlock x:Name="Status" Grid.Row="2" Style="{StaticResource Caption}" TextWrapping="Wrap" Margin="2,12,0,6"/>
         <ListBox x:Name="List" Grid.Row="3" Style="{StaticResource TrackList}" Margin="-8,0"/>
     </Grid>

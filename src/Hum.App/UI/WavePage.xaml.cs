@@ -99,11 +99,8 @@ public partial class WavePage : UserControl
         Paint();
     }
 
-    private void OnNebulaFrame()
-    {
-        var s = 1 + Neb.Energy * 0.03;
-        NameScale.ScaleX = NameScale.ScaleY = s;
-    }
+    // the music moves the sky, not the title
+    private void OnNebulaFrame() { }
 
     // ------------------------------------------------------------------ colour
 
@@ -157,6 +154,7 @@ public partial class WavePage : UserControl
         HeroPlay.Resources["Accent"] = new SolidColorBrush(Color.FromArgb(0x30, 255, 255, 255));
         HeroPlay.Resources["OnAccent"] = Brushes.White;
         Neb.Scheme = NebulaScheme();
+        Look.SetVibe(Neb.Scheme);
         HeroKick.Text = (CurrentSource == Source.Yandex ? "ЯНДЕКС" : "SOUNDCLOUD") + "  ·  ЭФИР";
     }
 
